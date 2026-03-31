@@ -1,0 +1,567 @@
+/* ═══════════════════════════════════════════
+   eOrchKey — Brutalist Dark Theme
+   Mobile-first, full-screen, no-scroll
+   ═══════════════════════════════════════════ */
+
+:root {
+  --c-bg:        #000;
+  --c-surface:   #080808;
+  --c-surface2:  #0f0f0f;
+  --c-border:    #1e1e1e;
+  --c-border2:   #2a2a2a;
+  --c-text:      #efefef;
+  --c-muted:     #484848;
+  --c-accent:    #d4ff00;   /* neon yellow — high-visibility on stage */
+  --c-key-bg:    #0a0a0a;
+  --c-key-bd:    #1c1c1c;
+  --topbar-h:    48px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: 'Courier New', Courier, monospace;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ─── Audio Gate ────────────────────────────────────── */
+.audio-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.gate-logo {
+  font-size: clamp(2.8rem, 12vw, 5.5rem);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: var(--c-text);
+  line-height: 1;
+}
+
+.gate-sub {
+  font-size: clamp(0.6rem, 2.5vw, 0.75rem);
+  letter-spacing: 0.4em;
+  color: var(--c-muted);
+  text-transform: uppercase;
+}
+
+.gate-start {
+  margin-top: 36px;
+  padding: 18px 52px;
+  background: var(--c-accent);
+  color: #000;
+  font-family: inherit;
+  font-size: clamp(0.85rem, 3vw, 1rem);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.gate-start:active { opacity: 0.75; }
+
+.gate-hint {
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  color: var(--c-muted);
+  margin-top: 8px;
+}
+
+/* ─── App Shell ─────────────────────────────────────── */
+.app {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--c-bg);
+}
+
+.app.hidden { display: none; }
+
+/* ─── Top Bar ───────────────────────────────────────── */
+.topbar {
+  height: var(--topbar-h);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--c-border);
+  background: var(--c-surface);
+}
+
+.topbar-title {
+  font-size: 0.95rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  flex: 1;
+}
+
+.topbar-instrument {
+  font-size: 0.62rem;
+  letter-spacing: 0.22em;
+  color: var(--c-accent);
+  border: 1px solid var(--c-accent);
+  padding: 3px 9px;
+  line-height: 1.4;
+}
+
+.settings-btn {
+  background: none;
+  border: none;
+  color: var(--c-text);
+  cursor: pointer;
+  padding: 6px;
+  line-height: 0;
+  opacity: 0.7;
+  transition: opacity 0.15s, color 0.15s;
+}
+.settings-btn:active { color: var(--c-accent); opacity: 1; }
+
+/* ─── Key Grid ──────────────────────────────────────── */
+.key-grid {
+  flex: 1;
+  display: grid;
+  grid-template-rows: 1fr;
+  gap: 3px;
+  padding: 3px;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  position: relative;
+}
+
+/* ─── Key Button ────────────────────────────────────── */
+.key {
+  background: var(--c-key-bg);
+  border: 1px solid var(--c-key-bd);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: clamp(10px, 3vh, 20px);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.04s, border-color 0.04s;
+  /* Prevent ghost clicks on mobile */
+  -webkit-touch-callout: none;
+}
+
+/* Top accent bar (hidden by default, lights up on press) */
+.key::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: transparent;
+  transition: background 0.04s;
+}
+
+/* Ripple overlay */
+.key::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--c-accent);
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+.key.active {
+  background: #0e0e05;
+  border-color: var(--c-accent);
+}
+
+.key.active::before {
+  background: var(--c-accent);
+}
+
+.key.active::after {
+  opacity: 0.04;
+}
+
+.key-note {
+  font-size: clamp(0.75rem, 3.5vw, 1.2rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--c-text);
+  line-height: 1.2;
+  position: relative;
+  z-index: 1;
+  transition: color 0.04s;
+}
+
+.key-freq {
+  font-size: clamp(0.55rem, 2vw, 0.72rem);
+  color: var(--c-muted);
+  letter-spacing: 0.03em;
+  margin-top: 2px;
+  position: relative;
+  z-index: 1;
+  transition: color 0.04s;
+}
+
+.key.active .key-note { color: var(--c-accent); }
+.key.active .key-freq { color: var(--c-accent); opacity: 0.55; }
+
+/* Gesture indicator dot (center of key, shown when active) */
+.key-dot {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--c-accent);
+  opacity: 0;
+  transition: opacity 0.08s, transform 0.08s;
+  pointer-events: none;
+  z-index: 2;
+}
+.key.active .key-dot {
+  opacity: 0.6;
+  transform: translate(-50%, -50%) scale(1.3);
+}
+
+/* ─── Settings Drawer ───────────────────────────────── */
+.settings-drawer {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--c-surface);
+  border-top: 1px solid var(--c-border2);
+  transform: translateY(100%);
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  max-height: 80dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 200;
+  overscroll-behavior: contain;
+  padding-bottom: var(--safe-bottom);
+}
+
+.settings-drawer.open {
+  transform: translateY(0);
+}
+
+.drawer-header {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--c-border);
+  position: sticky;
+  top: 0;
+  background: var(--c-surface);
+  z-index: 1;
+}
+
+.drawer-handle {
+  width: 32px; height: 3px;
+  background: var(--c-border2);
+  position: absolute;
+  top: 8px; left: 50%;
+  transform: translateX(-50%);
+  border-radius: 2px;
+}
+
+.drawer-label {
+  flex: 1;
+  font-size: 0.65rem;
+  letter-spacing: 0.28em;
+  color: var(--c-muted);
+}
+
+.drawer-close {
+  background: none;
+  border: none;
+  color: var(--c-muted);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 4px 8px;
+  font-family: inherit;
+  transition: color 0.15s;
+}
+.drawer-close:active { color: var(--c-text); }
+
+.drawer-body {
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* Backdrop (closes drawer on tap outside) */
+.drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  background: rgba(0, 0, 0, 0.65);
+}
+.drawer-backdrop.hidden { display: none; }
+
+/* ─── Setting Controls ──────────────────────────────── */
+.setting-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.setting-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.22em;
+  color: var(--c-muted);
+  text-transform: uppercase;
+}
+.setting-label span { color: var(--c-text); }
+
+.setting-row {
+  display: flex;
+  gap: 14px;
+}
+
+.setting-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.mt8 { margin-top: 6px; }
+
+/* Segmented control */
+.segmented {
+  display: flex;
+  gap: 1px;
+  background: var(--c-bg);
+  padding: 2px;
+  border: 1px solid var(--c-border2);
+}
+.segmented.wrap { flex-wrap: wrap; }
+
+.seg-btn {
+  flex: 1;
+  padding: 9px 6px;
+  background: none;
+  border: none;
+  color: var(--c-muted);
+  font-family: inherit;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  min-width: 0;
+  transition: background 0.12s, color 0.12s;
+}
+.seg-btn.active {
+  background: var(--c-accent);
+  color: #000;
+}
+.seg-btn:not(.active):active {
+  background: var(--c-border2);
+  color: var(--c-text);
+}
+
+/* Range slider */
+.range-input {
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 2px;
+  background: var(--c-border2);
+  outline: none;
+  cursor: pointer;
+}
+.range-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px; height: 18px;
+  background: var(--c-accent);
+  cursor: pointer;
+}
+.range-input::-moz-range-thumb {
+  width: 18px; height: 18px;
+  background: var(--c-accent);
+  border: none;
+  cursor: pointer;
+  border-radius: 0;
+}
+
+/* Select */
+.select-input {
+  background: var(--c-bg);
+  border: 1px solid var(--c-border2);
+  color: var(--c-text);
+  font-family: inherit;
+  font-size: 0.82rem;
+  padding: 7px 10px;
+  outline: none;
+  min-width: 80px;
+  cursor: pointer;
+}
+.select-input:focus { border-color: var(--c-accent); }
+
+/* Text input */
+.text-input {
+  width: 100%;
+  background: var(--c-bg);
+  border: 1px solid var(--c-border2);
+  color: var(--c-text);
+  font-family: inherit;
+  font-size: 0.78rem;
+  padding: 9px 10px;
+  outline: none;
+}
+.text-input:focus { border-color: var(--c-accent); }
+
+/* ADSR 2×2 grid */
+.adsr-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 14px;
+  margin-top: 6px;
+}
+
+/* Manual pitch inputs */
+#manualPitchInputs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.manual-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.manual-row-label {
+  font-size: 0.62rem;
+  color: var(--c-muted);
+  min-width: 22px;
+  text-align: right;
+}
+.manual-note-input {
+  flex: 1;
+  background: var(--c-bg);
+  border: 1px solid var(--c-border2);
+  color: var(--c-text);
+  font-family: inherit;
+  font-size: 0.82rem;
+  padding: 7px 9px;
+  outline: none;
+}
+.manual-note-input:focus { border-color: var(--c-accent); }
+
+/* Preset buttons */
+.preset-row {
+  display: flex;
+  gap: 8px;
+}
+.preset-btn {
+  flex: 1;
+  padding: 12px;
+  background: none;
+  border: 1px solid var(--c-border2);
+  color: var(--c-text);
+  font-family: inherit;
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.preset-btn:active {
+  background: var(--c-border2);
+}
+
+/* ─── Keyboard badge on key button ─────────────────── */
+.key-kbd {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: clamp(0.5rem, 1.8vw, 0.65rem);
+  letter-spacing: 0.04em;
+  color: var(--c-muted);
+  background: var(--c-border);
+  border: 1px solid var(--c-border2);
+  padding: 1px 5px;
+  line-height: 1.5;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 2;
+  transition: color 0.04s, border-color 0.04s;
+}
+.key.active .key-kbd {
+  color: var(--c-accent);
+  border-color: var(--c-accent);
+}
+
+/* ─── Key mapping editor ────────────────────────────── */
+#keyMapRows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.keymap-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--c-border2);
+  background: var(--c-bg);
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.keymap-row:hover     { border-color: var(--c-border2); background: var(--c-surface2); }
+.keymap-row.listening { border-color: var(--c-accent); background: #0b0b00; }
+
+.keymap-idx {
+  font-size: 0.6rem;
+  color: var(--c-muted);
+  min-width: 18px;
+  text-align: right;
+}
+.keymap-note {
+  font-size: 0.75rem;
+  color: var(--c-text);
+  flex: 1;
+}
+.keymap-key {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: var(--c-accent);
+  border: 1px solid var(--c-accent);
+  padding: 2px 7px;
+  min-width: 44px;
+  text-align: center;
+}
+.keymap-row.listening .keymap-key {
+  background: var(--c-accent);
+  color: #000;
+}
+.keymap-hint {
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  color: var(--c-accent);
+  text-align: center;
+  padding: 6px 0;
+  animation: blink 1s step-start infinite;
+}
+@keyframes blink { 50% { opacity: 0.3; } }
+
+/* ─── Utility ───────────────────────────────────────── */
+.hidden { display: none !important; }

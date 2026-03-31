@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <meta name="theme-color" content="#000000" />
+  <title>eOrchKey</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ── Audio start gate ── -->
+  <div id="audioGate" class="audio-gate">
+    <div class="gate-logo">eOrchKey</div>
+    <div class="gate-sub">MOBILE INSTRUMENT</div>
+    <button id="startBtn" class="gate-start">TAP TO BEGIN</button>
+    <div class="gate-hint">Piano · Flute · Vibraphone · FM Synth</div>
+  </div>
+
+  <!-- ── App shell (hidden until audio context started) ── -->
+  <div id="app" class="app hidden">
+
+    <!-- Top bar -->
+    <div class="topbar">
+      <span class="topbar-title">eOrchKey</span>
+      <div class="topbar-instrument" id="instrumentBadge">PIANO</div>
+      <button id="settingsBtn" class="settings-btn" aria-label="Open settings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 1v3M12 20v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M1 12h3M20 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Key grid (main performance surface) -->
+    <div id="keyGrid" class="key-grid"></div>
+
+    <!-- Settings drawer (slides up from bottom) -->
+    <div id="settingsDrawer" class="settings-drawer">
+      <div class="drawer-header">
+        <div class="drawer-handle"></div>
+        <span class="drawer-label">SETTINGS</span>
+        <button id="closeDrawer" class="drawer-close">✕</button>
+      </div>
+      <div class="drawer-body">
+
+        <!-- Instrument -->
+        <div class="setting-group">
+          <div class="setting-label">INSTRUMENT</div>
+          <div class="segmented" id="instrumentPicker">
+            <button class="seg-btn active" data-value="piano">Piano</button>
+            <button class="seg-btn" data-value="flute">Flute</button>
+            <button class="seg-btn" data-value="vibraphone">Vibes</button>
+            <button class="seg-btn" data-value="fmSynth">FM</button>
+          </div>
+        </div>
+
+        <!-- Key count -->
+        <div class="setting-group">
+          <div class="setting-label">KEYS &nbsp;<span id="keyCountVal">6</span></div>
+          <input type="range" id="keyCount" min="5" max="8" value="6" class="range-input" />
+        </div>
+
+        <!-- Pitch mode -->
+        <div class="setting-group">
+          <div class="setting-label">PITCH MODE</div>
+          <div class="segmented" id="pitchModePicker">
+            <button class="seg-btn active" data-value="scale">Scale Engine</button>
+            <button class="seg-btn" data-value="manual">Manual</button>
+          </div>
+        </div>
+
+        <!-- Scale Engine panel -->
+        <div id="scalePanel" class="setting-group">
+          <div class="setting-row">
+            <div class="setting-col">
+              <div class="setting-label">ROOT</div>
+              <select id="rootNote" class="select-input">
+                <option>C</option><option>C#</option><option>D</option>
+                <option>D#</option><option>E</option><option>F</option>
+                <option>F#</option><option>G</option><option>G#</option>
+                <option>A</option><option>A#</option><option>B</option>
+              </select>
+            </div>
+            <div class="setting-col">
+              <div class="setting-label">OCTAVE</div>
+              <select id="rootOctave" class="select-input">
+                <option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option>
+              </select>
+            </div>
+          </div>
+          <div class="setting-label mt8">SCALE</div>
+          <div class="segmented wrap" id="scalePicker">
+            <button class="seg-btn" data-value="chromatic">Chromatic</button>
+            <button class="seg-btn" data-value="major">Major</button>
+            <button class="seg-btn active" data-value="pentatonic">Pentatonic</button>
+            <button class="seg-btn" data-value="minor">Minor</button>
+            <button class="seg-btn" data-value="microtonal">Micro</button>
+          </div>
+          <div id="microtonalPanel" class="hidden mt8">
+            <div class="setting-label">INTERVALS IN CENTS (comma-separated)</div>
+            <input type="text" id="microtonalIntervals" class="text-input"
+              value="0, 150, 300, 450, 600, 750, 900, 1050"
+              placeholder="e.g. 0, 150, 300, 450" />
+          </div>
+        </div>
+
+        <!-- Manual pitch panel -->
+        <div id="manualPanel" class="setting-group hidden">
+          <div class="setting-label">PER-BUTTON NOTES (e.g. C4, D#4, G5)</div>
+          <div id="manualPitchInputs"></div>
+        </div>
+
+        <!-- Gesture sensitivity -->
+        <div class="setting-group">
+          <div class="setting-label">Y-AXIS SENSITIVITY (Filter Cutoff) &nbsp;<span id="ySensVal">1.0</span></div>
+          <input type="range" id="ySens" min="0.1" max="3" step="0.1" value="1.0" class="range-input" />
+          <div class="setting-label mt8">X-AXIS SENSITIVITY (Pitch Bend) &nbsp;<span id="xSensVal">1.0</span></div>
+          <input type="range" id="xSens" min="0.1" max="3" step="0.1" value="1.0" class="range-input" />
+        </div>
+
+        <!-- FM Synth params (only shown when FM is active) -->
+        <div id="fmPanel" class="setting-group hidden">
+          <div class="setting-label">FM SYNTHESIS PARAMETERS</div>
+          <div class="setting-label mt8">Modulation Index &nbsp;<span id="modIndexVal">3.0</span></div>
+          <input type="range" id="modIndex" min="0" max="30" step="0.5" value="3" class="range-input" />
+          <div class="setting-label mt8">Harmonicity &nbsp;<span id="harmonicityVal">1.5</span></div>
+          <input type="range" id="harmonicity" min="0.1" max="8" step="0.1" value="1.5" class="range-input" />
+          <div class="adsr-grid">
+            <div>
+              <div class="setting-label">A &nbsp;<span id="attackVal">0.01</span>s</div>
+              <input type="range" id="fmAttack" min="0.001" max="2" step="0.001" value="0.01" class="range-input" />
+            </div>
+            <div>
+              <div class="setting-label">D &nbsp;<span id="decayVal">0.30</span>s</div>
+              <input type="range" id="fmDecay" min="0.001" max="3" step="0.01" value="0.3" class="range-input" />
+            </div>
+            <div>
+              <div class="setting-label">S &nbsp;<span id="sustainVal">0.50</span></div>
+              <input type="range" id="fmSustain" min="0" max="1" step="0.01" value="0.5" class="range-input" />
+            </div>
+            <div>
+              <div class="setting-label">R &nbsp;<span id="releaseVal">0.80</span>s</div>
+              <input type="range" id="fmRelease" min="0.01" max="5" step="0.01" value="0.8" class="range-input" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Keyboard mapping -->
+        <div class="setting-group">
+          <div class="setting-label">KEYBOARD MAPPING</div>
+          <div id="keyMapRows"></div>
+          <div id="keyMapHint" class="keymap-hint hidden">PRESS ANY KEY — ESC TO CANCEL</div>
+        </div>
+
+        <!-- Preset save / load -->
+        <div class="setting-group preset-row">
+          <button id="btnSave" class="preset-btn">SAVE PRESET</button>
+          <button id="btnLoad" class="preset-btn">LOAD PRESET</button>
+        </div>
+
+      </div><!-- /drawer-body -->
+    </div><!-- /settings-drawer -->
+
+    <!-- Backdrop (closes drawer on tap) -->
+    <div id="drawerBackdrop" class="drawer-backdrop hidden"></div>
+
+  </div><!-- /app -->
+
+  <script src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
