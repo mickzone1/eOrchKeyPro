@@ -605,9 +605,15 @@ html, body {
   align-self: flex-start;
 }
 
-#qrCanvas {
+#qrContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* qrcodejs renders a table or canvas inside the container */
+#qrContainer canvas,
+#qrContainer img {
   display: block;
-  /* Canvas is sized by QRCode.toCanvas — just center it */
 }
 
 .share-hint {

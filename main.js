@@ -830,18 +830,22 @@ function loadStateFromURL() {
 }
 
 function showShareModal() {
-  const url = location.origin + location.pathname + encodeState();
+  // Build the shareable URL — works for both file:// (local) and https:// (deployed)
+  const base = location.href.replace(/#.*$/, '');
+  const url = base + encodeState();
 
   document.getElementById('shareUrl').value = url;
 
-  // Render QR code — accent-on-black matches app palette
-  QRCode.toCanvas(document.getElementById('qrCanvas'), url, {
+  // Clear any previous QR code then render fresh
+  const container = document.getElementById('qrContainer');
+  container.innerHTML = '';
+  new QRCode(container, {
+    text: url,
     width: 200,
-    margin: 1,
-    color: { dark: '#d4ff00', light: '#000000' },
-    errorCorrectionLevel: 'M',
-  }, (err) => {
-    if (err) console.error('QR generation error:', err);
+    height: 200,
+    colorDark: '#d4ff00',   // neon yellow on black — matches app palette
+    colorLight: '#000000',
+    correctLevel: QRCode.CorrectLevel.M,
   });
 
   document.getElementById('shareModal').classList.remove('hidden');
