@@ -688,98 +688,6 @@ function initControls() {
   bindRange('fmSustain',  'sustainVal',    (v) => { state.fmParams.sustain = v;         engine.updateFMParams(); }, 2);
   bindRange('fmRelease',  'releaseVal',    (v) => { state.fmParams.release = v;         engine.updateFMParams(); }, 2);
 
-  // ── Preset: Save ──
-  document.getElementById('btnSave').addEventListener('click', () => {
-    const preset = {
-      instrument:           state.instrument,
-      buttonCount:          state.buttonCount,
-      pitchMode:            state.pitchMode,
-      scale:                { ...state.scale },
-      manualPitches:        [...state.manualPitches],
-      microtonalIntervals:  [...state.microtonalIntervals],
-      gestureSensitivity:   { ...state.gestureSensitivity },
-      fmParams:             { ...state.fmParams },
-      keyMap:               [...state.keyMap],
-    };
-    localStorage.setItem('eOrchKeyPreset', JSON.stringify(preset));
-    const btn = document.getElementById('btnSave');
-    const prev = btn.textContent;
-    btn.textContent = 'SAVED ✓';
-    setTimeout(() => { btn.textContent = prev; }, 1600);
-  });
-
-  // ── Preset: Load ──
-  document.getElementById('btnLoad').addEventListener('click', () => {
-    const raw = localStorage.getItem('eOrchKeyPreset');
-    if (!raw) return;
-    try {
-      const p = JSON.parse(raw);
-
-      // Merge loaded values
-      if (p.instrument)          state.instrument          = p.instrument;
-      if (p.buttonCount)         state.buttonCount         = p.buttonCount;
-      if (p.pitchMode)           state.pitchMode           = p.pitchMode;
-      if (p.scale)               Object.assign(state.scale, p.scale);
-      if (p.manualPitches)       state.manualPitches       = p.manualPitches;
-      if (p.microtonalIntervals) state.microtonalIntervals = p.microtonalIntervals;
-      if (p.gestureSensitivity)  Object.assign(state.gestureSensitivity, p.gestureSensitivity);
-      if (p.fmParams)            Object.assign(state.fmParams, p.fmParams);
-      if (p.keyMap)              state.keyMap = p.keyMap;
-
-      rebuildCodeIndex();
-
-      // Rebuild synth with loaded instrument
-      engine.switchInstrument(state.instrument);
-
-      // Sync all range/select inputs to loaded state
-      document.getElementById('keyCount').value    = state.buttonCount;
-      document.getElementById('keyCountVal').textContent = state.buttonCount;
-      document.getElementById('rootNote').value    = state.scale.root;
-      document.getElementById('rootOctave').value  = state.scale.octave;
-
-      // Re-activate the correct seg-btn for instrument, pitchMode, scale
-      const activateSeg = (containerId, value) => {
-        document.querySelectorAll(`#${containerId} .seg-btn`).forEach((b) => {
-          b.classList.toggle('active', b.dataset.value === value);
-        });
-      };
-      activateSeg('instrumentPicker', state.instrument);
-      activateSeg('pitchModePicker', state.pitchMode);
-      activateSeg('scalePicker', state.scale.type);
-
-      document.getElementById('ySens').value      = state.gestureSensitivity.y;
-      document.getElementById('xSens').value      = state.gestureSensitivity.x;
-      document.getElementById('ySensVal').textContent = state.gestureSensitivity.y.toFixed(1);
-      document.getElementById('xSensVal').textContent = state.gestureSensitivity.x.toFixed(1);
-
-      document.getElementById('modIndex').value       = state.fmParams.modulationIndex;
-      document.getElementById('modIndexVal').textContent = state.fmParams.modulationIndex;
-      document.getElementById('harmonicity').value    = state.fmParams.harmonicity;
-      document.getElementById('harmonicityVal').textContent = state.fmParams.harmonicity;
-      document.getElementById('fmAttack').value       = state.fmParams.attack;
-      document.getElementById('attackVal').textContent = state.fmParams.attack.toFixed(3);
-      document.getElementById('fmDecay').value        = state.fmParams.decay;
-      document.getElementById('decayVal').textContent = state.fmParams.decay.toFixed(2);
-      document.getElementById('fmSustain').value      = state.fmParams.sustain;
-      document.getElementById('sustainVal').textContent = state.fmParams.sustain.toFixed(2);
-      document.getElementById('fmRelease').value      = state.fmParams.release;
-      document.getElementById('releaseVal').textContent = state.fmParams.release.toFixed(2);
-
-      document.getElementById('microtonalIntervals').value = state.microtonalIntervals.join(', ');
-
-      recomputePitches();
-      renderKeyGrid();
-      syncSettingsUI();
-
-      const btn = document.getElementById('btnLoad');
-      const prev = btn.textContent;
-      btn.textContent = 'LOADED ✓';
-      setTimeout(() => { btn.textContent = prev; }, 1600);
-    } catch (err) {
-      console.error('Preset load error:', err);
-    }
-  });
-
   // ── Orientation change: re-render grid ──
   window.addEventListener('resize', () => {
     renderKeyGrid();
@@ -909,6 +817,8 @@ loadStateFromURL();
 document.getElementById('startBtn').addEventListener('click', async () => {
   // Resume AudioContext (required by browser autoplay policy)
   await Tone.start();
+  // Override iOS silent-mode mute — treat app as a media playback app (iOS 16.4+)
+  if (navigator.audioSession) navigator.audioSession.type = 'playback';
 
   // Build audio engine (switches instrument if URL-loaded state differs from default)
   engine = new AudioEngine();
