@@ -692,19 +692,19 @@ html, body {
 
 .manual-pick-btn {
   background: none;
-  border: 1px solid var(--c-border2);
-  color: var(--c-muted);
+  border: 1px solid var(--c-accent);
+  color: var(--c-accent);
   font-family: inherit;
   font-size: 0.6rem;
   letter-spacing: 0.12em;
   padding: 7px 10px;
   cursor: pointer;
   white-space: nowrap;
-  transition: border-color 0.15s, color 0.15s;
+  transition: background 0.15s;
 }
 .manual-pick-btn:active {
-  border-color: var(--c-accent);
-  color: var(--c-accent);
+  background: var(--c-accent);
+  color: #000;
 }
 
 /* ─── Note Picker Modal ─────────────────────────────── */
@@ -813,6 +813,14 @@ html, body {
 
 .pk-black.selected { background: var(--c-accent); }
 .pk-black:not(.selected):active { background: #1a1a1a; }
+
+/* ─── Note picker action row ────────────────────── */
+.note-picker-actions {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+.note-picker-actions .preset-btn { flex: 1; }
 
 /* ─── Utility ───────────────────────────────────────── */
 .hidden { display: none !important; }

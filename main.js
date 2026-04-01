@@ -539,6 +539,11 @@ function commitRemap(code) {
 
 // ─── Settings UI Sync ────────────────────────────────────────────
 
+function syncRootDisplay() {
+  const el = document.getElementById('rootNoteDisplay');
+  if (el) el.textContent = state.scale.root + state.scale.octave;
+}
+
 function syncSettingsUI() {
   const BADGE = { piano: 'PIANO', flute: 'FLUTE', vibraphone: 'VIBES', fmSynth: 'FM SYNTH' };
   document.getElementById('instrumentBadge').textContent = BADGE[state.instrument] ?? 'SYNTH';
@@ -546,8 +551,7 @@ function syncSettingsUI() {
   // Sync select inputs to state (important after URL-load or preset-load)
   document.getElementById('keyCount').value  = state.buttonCount;
   document.getElementById('keyCountVal').textContent = state.buttonCount;
-  document.getElementById('rootNote').value  = state.scale.root;
-  document.getElementById('rootOctave').value = state.scale.octave;
+  syncRootDisplay();
   document.getElementById('microtonalIntervals').value = state.microtonalIntervals.join(', ');
 
   // Sync segmented controls
@@ -657,18 +661,6 @@ function initControls() {
     renderKeyGrid();
   });
 
-  // ── Root note & octave ──
-  document.getElementById('rootNote').addEventListener('change', (e) => {
-    state.scale.root = e.target.value;
-    recomputePitches();
-    renderKeyGrid();
-  });
-  document.getElementById('rootOctave').addEventListener('change', (e) => {
-    state.scale.octave = Number(e.target.value);
-    recomputePitches();
-    renderKeyGrid();
-  });
-
   // ── Microtonal intervals ──
   document.getElementById('microtonalIntervals').addEventListener('change', (e) => {
     state.microtonalIntervals = e.target.value
@@ -712,8 +704,10 @@ function initControls() {
 
 // ─── Note Picker ─────────────────────────────────────────────────
 
-let notePickerTarget = -1;
+let notePickerTarget = -1;      // ≥0: per-button mode; -2: root picker mode
 let notePickerStartOctave = 3;
+let notePickerPreview = null;   // note string currently highlighted
+let notePickerPlaying = null;   // note string currently sounding (for release)
 
 const BLACK_KEY_NAMES = new Set(['C#', 'D#', 'F#', 'G#', 'A#']);
 const WHITE_KEY_W = 36;
@@ -721,29 +715,58 @@ const BLACK_KEY_W = 22;
 
 function openNotePicker(btnIdx) {
   notePickerTarget = btnIdx;
-  // Start octave view centered around the current note's octave
-  const currentNote = state.manualPitches[btnIdx] ?? 'C4';
-  const match = currentNote.match(/(\d+)$/);
-  if (match) {
-    notePickerStartOctave = Math.max(1, Math.min(6, Number(match[1]) - 1));
-  } else {
-    notePickerStartOctave = 3;
-  }
-  document.getElementById('notePickerIdx').textContent = btnIdx + 1;
+  notePickerPreview = state.manualPitches[btnIdx] ?? 'C4';
+  const match = notePickerPreview.match(/(\d+)$/);
+  notePickerStartOctave = match ? Math.max(1, Math.min(6, Number(match[1]) - 1)) : 3;
+  document.getElementById('notePickerTitle').textContent = `SELECT NOTE — BUTTON ${btnIdx + 1}`;
+  renderPianoKeys();
+  document.getElementById('notePickerModal').classList.remove('hidden');
+}
+
+function openRootPicker() {
+  notePickerTarget = -2;
+  notePickerPreview = state.scale.root + state.scale.octave;
+  notePickerStartOctave = Math.max(1, Math.min(6, state.scale.octave - 1));
+  document.getElementById('notePickerTitle').textContent = 'SELECT ROOT NOTE';
   renderPianoKeys();
   document.getElementById('notePickerModal').classList.remove('hidden');
 }
 
 function closeNotePicker() {
+  if (notePickerPlaying) {
+    try { engine.triggerRelease({ note: notePickerPlaying }); } catch (_) {}
+    notePickerPlaying = null;
+  }
   notePickerTarget = -1;
+  notePickerPreview = null;
   document.getElementById('notePickerModal').classList.add('hidden');
+}
+
+function commitNotePicker() {
+  if (notePickerPreview === null) { closeNotePicker(); return; }
+  if (notePickerTarget >= 0) {
+    state.manualPitches[notePickerTarget] = notePickerPreview;
+    recomputePitches();
+    renderKeyGrid();
+    renderManualPitchInputs();
+  } else if (notePickerTarget === -2) {
+    const match = notePickerPreview.match(/^([A-G]#?)(\d+)$/);
+    if (match) {
+      state.scale.root = match[1];
+      state.scale.octave = Number(match[2]);
+      syncRootDisplay();
+      recomputePitches();
+      renderKeyGrid();
+    }
+  }
+  closeNotePicker();
 }
 
 function renderPianoKeys() {
   const container = document.getElementById('pianoKeys');
   container.innerHTML = '';
 
-  const currentNote = notePickerTarget >= 0 ? (state.manualPitches[notePickerTarget] ?? 'C4') : 'C4';
+  const currentNote = notePickerPreview ?? 'C4';
   let whiteCount = 0;
 
   for (let oct = notePickerStartOctave; oct < notePickerStartOctave + 3; oct++) {
@@ -767,13 +790,15 @@ function renderPianoKeys() {
       }
 
       el.addEventListener('click', () => {
-        if (notePickerTarget >= 0) {
-          state.manualPitches[notePickerTarget] = noteStr;
-          recomputePitches();
-          renderKeyGrid();
-          renderManualPitchInputs();
+        // Release previously previewed note
+        if (notePickerPlaying) {
+          try { engine.triggerRelease({ note: notePickerPlaying }); } catch (_) {}
         }
-        closeNotePicker();
+        // Play and preview the tapped note
+        engine.triggerAttack({ note: noteStr, detuneOffset: 0 }, 0.7);
+        notePickerPlaying = noteStr;
+        notePickerPreview = noteStr;
+        renderPianoKeys(); // re-highlight without closing
       });
 
       container.appendChild(el);
@@ -794,6 +819,7 @@ function renderPianoKeys() {
 }
 
 function initNotePickerControls() {
+  document.getElementById('notePickerOK').addEventListener('click', commitNotePicker);
   document.getElementById('notePickerCancel').addEventListener('click', closeNotePicker);
   document.getElementById('notePickerModal').addEventListener('click', (e) => {
     if (e.target === document.getElementById('notePickerModal')) closeNotePicker();
@@ -806,6 +832,7 @@ function initNotePickerControls() {
     notePickerStartOctave = Math.min(6, notePickerStartOctave + 1);
     renderPianoKeys();
   });
+  document.getElementById('btnPickRoot').addEventListener('click', openRootPicker);
 }
 
 

@@ -67,29 +67,17 @@
         <div class="setting-group">
           <div class="setting-label">PITCH MODE</div>
           <div class="segmented" id="pitchModePicker">
-            <button class="seg-btn active" data-value="scale">Scale Engine</button>
+            <button class="seg-btn active" data-value="scale">Scales</button>
             <button class="seg-btn" data-value="manual">Manual</button>
           </div>
         </div>
 
-        <!-- Scale Engine panel -->
+        <!-- Scales panel -->
         <div id="scalePanel" class="setting-group">
-          <div class="setting-row">
-            <div class="setting-col">
-              <div class="setting-label">ROOT</div>
-              <select id="rootNote" class="select-input">
-                <option>C</option><option>C#</option><option>D</option>
-                <option>D#</option><option>E</option><option>F</option>
-                <option>F#</option><option>G</option><option>G#</option>
-                <option>A</option><option>A#</option><option>B</option>
-              </select>
-            </div>
-            <div class="setting-col">
-              <div class="setting-label">OCTAVE</div>
-              <select id="rootOctave" class="select-input">
-                <option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option>
-              </select>
-            </div>
+          <div class="setting-label">ROOT NOTE</div>
+          <div class="manual-row">
+            <span id="rootNoteDisplay" class="manual-note-display">C4</span>
+            <button id="btnPickRoot" class="manual-pick-btn">CHANGE</button>
           </div>
           <div class="setting-label mt8">SCALE</div>
           <div class="segmented wrap" id="scalePicker">
@@ -187,7 +175,7 @@
     <!-- Note picker modal (slides up from bottom) -->
     <div id="notePickerModal" class="note-picker-modal hidden">
       <div class="note-picker-box">
-        <div class="note-picker-title">SELECT NOTE — BUTTON <span id="notePickerIdx"></span></div>
+        <div id="notePickerTitle" class="note-picker-title">SELECT NOTE</div>
         <div class="note-picker-nav">
           <button id="notePickerOctDown" class="preset-btn">◀</button>
           <span id="notePickerOctLabel">C3 – B5</span>
@@ -196,7 +184,10 @@
         <div class="piano-scroll-wrap">
           <div id="pianoKeys" class="piano-keys"></div>
         </div>
-        <button id="notePickerCancel" class="preset-btn">CANCEL</button>
+        <div class="note-picker-actions">
+          <button id="notePickerOK" class="preset-btn preset-btn--share">OK</button>
+          <button id="notePickerCancel" class="preset-btn">CANCEL</button>
+        </div>
       </div>
     </div>
 
