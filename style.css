@@ -55,10 +55,9 @@ html, body {
 }
 
 .gate-appname {
-  font-size: clamp(1.4rem, 6vw, 2rem);
-  font-weight: 900;
-  letter-spacing: 0.12em;
-  color: var(--c-accent);
+  font-size: clamp(0.6rem, 2.5vw, 0.75rem);
+  letter-spacing: 0.4em;
+  color: var(--c-muted);
   text-transform: uppercase;
 }
 
@@ -70,7 +69,7 @@ html, body {
 }
 
 .gate-start {
-  margin-top: 36px;
+  margin-top: 14px;
   padding: 18px 52px;
   background: var(--c-accent);
   color: #000;
