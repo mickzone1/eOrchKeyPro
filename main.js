@@ -74,8 +74,8 @@ function getButtonPitches(root, octave, scaleType, count, microtonalCents) {
  */
 const DEFAULT_KEY_MAP = [
   'ArrowLeft', 'ArrowUp', 'ArrowRight', 'ArrowDown',
-  'Space', 'Digit1', 'Digit2', 'Digit3',
-  'KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyT', 'KeyY', 'KeyU', 'KeyI',
+  'Space', 'KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG',
+  'KeyH', 'KeyJ', 'KeyK', 'KeyL', 'Semicolon', 'Quote',
 ];
 
 /** Human-readable short labels for display on buttons and in the editor. */
@@ -84,6 +84,7 @@ const KEY_DISPLAY = {
   Space: 'SPC',
   Digit0: '0', Digit1: '1', Digit2: '2', Digit3: '3', Digit4: '4',
   Digit5: '5', Digit6: '6', Digit7: '7', Digit8: '8', Digit9: '9',
+  Semicolon: ';', Quote: "'",
 };
 function keyDisplayLabel(code) {
   if (KEY_DISPLAY[code]) return KEY_DISPLAY[code];
@@ -760,12 +761,12 @@ function renderPianoKeys() {
       } else {
         el.className = 'pk-white' + (isSelected ? ' selected' : '');
         el.style.width = WHITE_KEY_W + 'px';
+        const label = name === 'C' ? name + oct : name;
+        el.innerHTML = `<span class="pk-label">${label}</span>`;
         whiteCount++;
       }
 
-      el.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+      el.addEventListener('click', () => {
         if (notePickerTarget >= 0) {
           state.manualPitches[notePickerTarget] = noteStr;
           recomputePitches();
@@ -870,8 +871,8 @@ function showShareModal(locked = false) {
       text: url,
       width: 200,
       height: 200,
-      colorDark: '#d4ff00',
-      colorLight: '#000000',
+      colorDark: '#000000',
+      colorLight: '#ffffff',
       correctLevel: QRCode.CorrectLevel.M,
     });
   } catch (err) {

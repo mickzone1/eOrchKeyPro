@@ -775,6 +775,8 @@ html, body {
   background: #111;
   cursor: pointer;
   box-sizing: border-box;
+  position: relative;
+  touch-action: none;
   transition: background 0.08s;
 }
 
@@ -790,8 +792,24 @@ html, body {
   top: 0;
   cursor: pointer;
   box-sizing: border-box;
+  touch-action: none;
   transition: background 0.08s;
 }
+
+.pk-label {
+  position: absolute;
+  bottom: 5px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 8px;
+  letter-spacing: 0;
+  color: var(--c-muted);
+  pointer-events: none;
+  line-height: 1;
+  font-family: 'Courier New', Courier, monospace;
+}
+.pk-white.selected .pk-label { color: #000; }
 
 .pk-black.selected { background: var(--c-accent); }
 .pk-black:not(.selected):active { background: #1a1a1a; }
