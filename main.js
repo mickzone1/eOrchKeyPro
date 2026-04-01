@@ -836,19 +836,25 @@ function showShareModal() {
 
   document.getElementById('shareUrl').value = url;
 
-  // Clear any previous QR code then render fresh
+  // Show the modal immediately — QR generation happens after
+  document.getElementById('shareModal').classList.remove('hidden');
+
+  // Clear any previous QR, then attempt generation
   const container = document.getElementById('qrContainer');
   container.innerHTML = '';
-  new QRCode(container, {
-    text: url,
-    width: 200,
-    height: 200,
-    colorDark: '#d4ff00',   // neon yellow on black — matches app palette
-    colorLight: '#000000',
-    correctLevel: QRCode.CorrectLevel.M,
-  });
-
-  document.getElementById('shareModal').classList.remove('hidden');
+  try {
+    new QRCode(container, {
+      text: url,
+      width: 200,
+      height: 200,
+      colorDark: '#d4ff00',
+      colorLight: '#000000',
+      correctLevel: QRCode.CorrectLevel.M,
+    });
+  } catch (err) {
+    console.error('QR generation failed:', err);
+    container.innerHTML = '<p style="font-size:0.65rem;color:#484848;text-align:center;padding:16px 0">QR unavailable — use the link above</p>';
+  }
 }
 
 function hideShareModal() {
