@@ -46,12 +46,12 @@ html, body {
   gap: 12px;
 }
 
-.gate-logo {
-  font-size: clamp(2.8rem, 12vw, 5.5rem);
-  font-weight: 900;
-  letter-spacing: -0.03em;
-  color: var(--c-text);
-  line-height: 1;
+.gate-logo-img {
+  width: min(72vw, 320px);
+  height: auto;
+  display: block;
+  /* Subtle drop shadow to lift the gold off the black background */
+  filter: drop-shadow(0 0 18px rgba(212, 175, 55, 0.35));
 }
 
 .gate-sub {
