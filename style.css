@@ -563,5 +563,82 @@ html, body {
 }
 @keyframes blink { 50% { opacity: 0.3; } }
 
+/* ─── Share button variant ──────────────────────────── */
+.preset-btn--share {
+  color: var(--c-accent);
+  border-color: var(--c-accent);
+}
+.preset-btn--share:active {
+  background: var(--c-accent);
+  color: #000;
+}
+
+/* ─── Share Modal ───────────────────────────────────── */
+.share-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(0, 0, 0, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.share-box {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border2);
+  padding: 24px 20px 20px;
+  width: 100%;
+  max-width: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.share-title {
+  font-size: 0.65rem;
+  letter-spacing: 0.28em;
+  color: var(--c-muted);
+  text-transform: uppercase;
+  align-self: flex-start;
+}
+
+#qrCanvas {
+  display: block;
+  /* Canvas is sized by QRCode.toCanvas — just center it */
+}
+
+.share-hint {
+  font-size: 0.58rem;
+  letter-spacing: 0.15em;
+  color: var(--c-muted);
+  text-align: center;
+}
+
+.share-url {
+  width: 100%;
+  background: var(--c-bg);
+  border: 1px solid var(--c-border2);
+  color: var(--c-muted);
+  font-family: inherit;
+  font-size: 0.62rem;
+  padding: 8px 10px;
+  resize: none;
+  outline: none;
+  word-break: break-all;
+  line-height: 1.5;
+  cursor: text;
+}
+.share-url:focus { border-color: var(--c-accent); color: var(--c-text); }
+
+.share-actions {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+.share-actions .preset-btn { flex: 1; }
+
 /* ─── Utility ───────────────────────────────────────── */
 .hidden { display: none !important; }

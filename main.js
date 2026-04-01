@@ -528,6 +528,23 @@ function syncSettingsUI() {
   const BADGE = { piano: 'PIANO', flute: 'FLUTE', vibraphone: 'VIBES', fmSynth: 'FM SYNTH' };
   document.getElementById('instrumentBadge').textContent = BADGE[state.instrument] ?? 'SYNTH';
 
+  // Sync select inputs to state (important after URL-load or preset-load)
+  document.getElementById('keyCount').value  = state.buttonCount;
+  document.getElementById('keyCountVal').textContent = state.buttonCount;
+  document.getElementById('rootNote').value  = state.scale.root;
+  document.getElementById('rootOctave').value = state.scale.octave;
+  document.getElementById('microtonalIntervals').value = state.microtonalIntervals.join(', ');
+
+  // Sync segmented controls
+  const activateSeg = (id, value) => {
+    document.querySelectorAll(`#${id} .seg-btn`).forEach((b) => {
+      b.classList.toggle('active', b.dataset.value === value);
+    });
+  };
+  activateSeg('instrumentPicker', state.instrument);
+  activateSeg('pitchModePicker', state.pitchMode);
+  activateSeg('scalePicker', state.scale.type);
+
   // Show/hide conditional panels
   document.getElementById('fmPanel').classList.toggle('hidden', state.instrument !== 'fmSynth');
   document.getElementById('scalePanel').classList.toggle('hidden', state.pitchMode !== 'scale');
@@ -770,14 +787,122 @@ function initControls() {
 }
 
 
+// ─── URL State Encoding / Sharing ───────────────────────────────
+
+const PRESET_KEYS = [
+  'instrument', 'buttonCount', 'pitchMode', 'scale',
+  'manualPitches', 'microtonalIntervals', 'gestureSensitivity',
+  'fmParams', 'keyMap',
+];
+
+function encodeState() {
+  const snapshot = {};
+  PRESET_KEYS.forEach((k) => { snapshot[k] = state[k]; });
+  const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(snapshot));
+  return '#s=' + compressed;
+}
+
+/**
+ * Merge URL-encoded state into `state` before the app starts.
+ * Returns true if a valid state was found and loaded.
+ */
+function loadStateFromURL() {
+  const hash = location.hash;
+  if (!hash.startsWith('#s=')) return false;
+  try {
+    const json = LZString.decompressFromEncodedURIComponent(hash.slice(3));
+    if (!json) return false;
+    const p = JSON.parse(json);
+    if (p.instrument)          state.instrument          = p.instrument;
+    if (p.buttonCount)         state.buttonCount         = p.buttonCount;
+    if (p.pitchMode)           state.pitchMode           = p.pitchMode;
+    if (p.scale)               Object.assign(state.scale, p.scale);
+    if (p.manualPitches)       state.manualPitches       = p.manualPitches;
+    if (p.microtonalIntervals) state.microtonalIntervals = p.microtonalIntervals;
+    if (p.gestureSensitivity)  Object.assign(state.gestureSensitivity, p.gestureSensitivity);
+    if (p.fmParams)            Object.assign(state.fmParams, p.fmParams);
+    if (p.keyMap)              state.keyMap              = p.keyMap;
+    return true;
+  } catch (err) {
+    console.warn('URL state decode error:', err);
+    return false;
+  }
+}
+
+function showShareModal() {
+  const url = location.origin + location.pathname + encodeState();
+
+  document.getElementById('shareUrl').value = url;
+
+  // Render QR code — accent-on-black matches app palette
+  QRCode.toCanvas(document.getElementById('qrCanvas'), url, {
+    width: 200,
+    margin: 1,
+    color: { dark: '#d4ff00', light: '#000000' },
+    errorCorrectionLevel: 'M',
+  }, (err) => {
+    if (err) console.error('QR generation error:', err);
+  });
+
+  document.getElementById('shareModal').classList.remove('hidden');
+}
+
+function hideShareModal() {
+  document.getElementById('shareModal').classList.add('hidden');
+}
+
+function initShareControls() {
+  document.getElementById('btnShare').addEventListener('click', () => {
+    closeSettings();
+    showShareModal();
+  });
+
+  document.getElementById('btnCloseShare').addEventListener('click', hideShareModal);
+
+  // Close on backdrop click (outside the box)
+  document.getElementById('shareModal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('shareModal')) hideShareModal();
+  });
+
+  document.getElementById('btnCopyLink').addEventListener('click', () => {
+    const url = document.getElementById('shareUrl').value;
+    const btn = document.getElementById('btnCopyLink');
+    const prev = btn.textContent;
+
+    const flash = () => {
+      btn.textContent = 'COPIED ✓';
+      setTimeout(() => { btn.textContent = prev; }, 1800);
+    };
+
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(url).then(flash).catch(() => fallbackCopy(url, flash));
+    } else {
+      fallbackCopy(url, flash);
+    }
+  });
+}
+
+function fallbackCopy(text, done) {
+  const ta = document.getElementById('shareUrl');
+  ta.select();
+  ta.setSelectionRange(0, 99999);
+  try { document.execCommand('copy'); } catch (_) {}
+  done();
+}
+
+
 // ─── Bootstrap ───────────────────────────────────────────────────
+
+// Pre-populate state from URL hash before anything renders
+loadStateFromURL();
 
 document.getElementById('startBtn').addEventListener('click', async () => {
   // Resume AudioContext (required by browser autoplay policy)
   await Tone.start();
 
-  // Build audio engine
+  // Build audio engine (switches instrument if URL-loaded state differs from default)
   engine = new AudioEngine();
+  if (state.instrument !== 'piano') engine.switchInstrument(state.instrument);
 
   // Compute initial pitches and render
   recomputePitches();
@@ -786,6 +911,7 @@ document.getElementById('startBtn').addEventListener('click', async () => {
   // Wire all controls
   initControls();
   initKeyboardLayer();
+  initShareControls();
   syncSettingsUI();
 
   // Show app, hide gate
