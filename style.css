@@ -646,5 +646,122 @@ html, body {
 }
 .share-actions .preset-btn { flex: 1; }
 
+/* ─── Manual mode — note display row ───────────────── */
+.manual-note-display {
+  flex: 1;
+  font-size: 0.85rem;
+  color: var(--c-text);
+  letter-spacing: 0.04em;
+  padding: 7px 9px;
+  background: var(--c-bg);
+  border: 1px solid var(--c-border2);
+}
+
+.manual-pick-btn {
+  background: none;
+  border: 1px solid var(--c-border2);
+  color: var(--c-muted);
+  font-family: inherit;
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  padding: 7px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s;
+}
+.manual-pick-btn:active {
+  border-color: var(--c-accent);
+  color: var(--c-accent);
+}
+
+/* ─── Note Picker Modal ─────────────────────────────── */
+.note-picker-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  background: rgba(0, 0, 0, 0.92);
+  display: flex;
+  align-items: flex-end;
+}
+
+.note-picker-box {
+  width: 100%;
+  background: var(--c-surface);
+  border-top: 1px solid var(--c-border2);
+  padding: 16px 12px max(20px, var(--safe-bottom));
+}
+
+.note-picker-title {
+  font-size: 0.65rem;
+  letter-spacing: 0.25em;
+  color: var(--c-muted);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.note-picker-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.note-picker-nav span {
+  flex: 1;
+  text-align: center;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  color: var(--c-text);
+}
+
+.note-picker-nav .preset-btn {
+  flex: 0 0 auto;
+  padding: 8px 16px;
+}
+
+.piano-scroll-wrap {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.piano-keys {
+  position: relative;
+  display: inline-flex;
+  height: 100px;
+  user-select: none;
+  touch-action: pan-x;
+}
+
+.pk-white {
+  flex-shrink: 0;
+  height: 100px;
+  border: 1px solid #222;
+  background: #111;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: background 0.08s;
+}
+
+.pk-white.selected { background: var(--c-accent); }
+.pk-white:not(.selected):active { background: #2a2a2a; }
+
+.pk-black {
+  position: absolute;
+  height: 62px;
+  background: #000;
+  border: 1px solid #333;
+  z-index: 1;
+  top: 0;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: background 0.08s;
+}
+
+.pk-black.selected { background: var(--c-accent); }
+.pk-black:not(.selected):active { background: #1a1a1a; }
+
 /* ─── Utility ───────────────────────────────────────── */
 .hidden { display: none !important; }

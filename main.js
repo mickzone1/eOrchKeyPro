@@ -75,6 +75,7 @@ function getButtonPitches(root, octave, scaleType, count, microtonalCents) {
 const DEFAULT_KEY_MAP = [
   'ArrowLeft', 'ArrowUp', 'ArrowRight', 'ArrowDown',
   'Space', 'Digit1', 'Digit2', 'Digit3',
+  'KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyT', 'KeyY', 'KeyU', 'KeyI',
 ];
 
 /** Human-readable short labels for display on buttons and in the editor. */
@@ -104,8 +105,8 @@ const state = {
   buttonCount: 6,
   pitchMode: 'scale',
   scale: { root: 'C', octave: 4, type: 'pentatonic' },
-  manualPitches: ['C4', 'E4', 'G4', 'A4', 'C5', 'E5', 'G5', 'A5'],
-  microtonalIntervals: [0, 150, 300, 450, 600, 750, 900, 1050],
+  manualPitches: ['C3','D3','E3','F3','G3','A3','B3','C4','D4','E4','F4','G4','A4','B4','C5','D5'],
+  microtonalIntervals: [0, 75, 150, 225, 300, 375, 450, 525, 600, 675, 750, 825, 900, 975, 1050, 1125],
   gestureSensitivity: { y: 1.0, x: 1.0 },
   fmParams: {
     attack: 0.01,
@@ -330,13 +331,23 @@ function renderKeyGrid() {
   const isPortrait = window.innerHeight > window.innerWidth;
   const count = state.buttonCount;
 
-  if (isPortrait && count > 4) {
-    const cols = Math.ceil(count / 2);
-    grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-    grid.style.gridTemplateRows = '1fr 1fr';
-  } else {
+  if (count <= 4) {
     grid.style.gridTemplateColumns = `repeat(${count}, 1fr)`;
     grid.style.gridTemplateRows = '1fr';
+  } else if (count <= 8) {
+    if (isPortrait) {
+      grid.style.gridTemplateColumns = `repeat(${Math.ceil(count / 2)}, 1fr)`;
+      grid.style.gridTemplateRows = '1fr 1fr';
+    } else {
+      grid.style.gridTemplateColumns = `repeat(${count}, 1fr)`;
+      grid.style.gridTemplateRows = '1fr';
+    }
+  } else {
+    // 9–16 buttons: 2 rows landscape, 4 rows portrait
+    const rows = isPortrait ? 4 : 2;
+    const cols = Math.ceil(count / rows);
+    grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+    grid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
   }
 
   state.computedPitches.forEach((pitch, idx) => {
@@ -564,12 +575,11 @@ function renderManualPitchInputs() {
     const val = state.manualPitches[i] ?? 'C4';
     row.innerHTML = `
       <span class="manual-row-label">${i + 1}</span>
-      <input type="text" class="manual-note-input" value="${val}" data-idx="${i}" />
+      <span class="manual-note-display">${val}</span>
+      <button class="manual-pick-btn" data-idx="${i}">CHANGE</button>
     `;
-    row.querySelector('input').addEventListener('change', (e) => {
-      state.manualPitches[Number(e.target.dataset.idx)] = e.target.value.trim();
-      recomputePitches();
-      renderKeyGrid();
+    row.querySelector('.manual-pick-btn').addEventListener('click', (e) => {
+      openNotePicker(Number(e.currentTarget.dataset.idx));
     });
     container.appendChild(row);
   }
@@ -691,6 +701,105 @@ function initControls() {
   // ── Orientation change: re-render grid ──
   window.addEventListener('resize', () => {
     renderKeyGrid();
+  });
+}
+
+
+// ─── Note Picker ─────────────────────────────────────────────────
+
+let notePickerTarget = -1;
+let notePickerStartOctave = 3;
+
+const BLACK_KEY_NAMES = new Set(['C#', 'D#', 'F#', 'G#', 'A#']);
+const WHITE_KEY_W = 36;
+const BLACK_KEY_W = 22;
+
+function openNotePicker(btnIdx) {
+  notePickerTarget = btnIdx;
+  // Start octave view centered around the current note's octave
+  const currentNote = state.manualPitches[btnIdx] ?? 'C4';
+  const match = currentNote.match(/(\d+)$/);
+  if (match) {
+    notePickerStartOctave = Math.max(1, Math.min(6, Number(match[1]) - 1));
+  } else {
+    notePickerStartOctave = 3;
+  }
+  document.getElementById('notePickerIdx').textContent = btnIdx + 1;
+  renderPianoKeys();
+  document.getElementById('notePickerModal').classList.remove('hidden');
+}
+
+function closeNotePicker() {
+  notePickerTarget = -1;
+  document.getElementById('notePickerModal').classList.add('hidden');
+}
+
+function renderPianoKeys() {
+  const container = document.getElementById('pianoKeys');
+  container.innerHTML = '';
+
+  const currentNote = notePickerTarget >= 0 ? (state.manualPitches[notePickerTarget] ?? 'C4') : 'C4';
+  let whiteCount = 0;
+
+  for (let oct = notePickerStartOctave; oct < notePickerStartOctave + 3; oct++) {
+    for (const name of NOTE_NAMES) {
+      const noteStr = name + oct;
+      const isBlack = BLACK_KEY_NAMES.has(name);
+      const isSelected = noteStr === currentNote;
+
+      const el = document.createElement('div');
+
+      if (isBlack) {
+        el.className = 'pk-black' + (isSelected ? ' selected' : '');
+        el.style.left = (whiteCount * WHITE_KEY_W - BLACK_KEY_W / 2) + 'px';
+        el.style.width = BLACK_KEY_W + 'px';
+      } else {
+        el.className = 'pk-white' + (isSelected ? ' selected' : '');
+        el.style.width = WHITE_KEY_W + 'px';
+        whiteCount++;
+      }
+
+      el.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (notePickerTarget >= 0) {
+          state.manualPitches[notePickerTarget] = noteStr;
+          recomputePitches();
+          renderKeyGrid();
+          renderManualPitchInputs();
+        }
+        closeNotePicker();
+      });
+
+      container.appendChild(el);
+    }
+  }
+
+  document.getElementById('notePickerOctLabel').textContent =
+    `C${notePickerStartOctave} – B${notePickerStartOctave + 2}`;
+
+  // Scroll selected key into view
+  const wrap = document.querySelector('.piano-scroll-wrap');
+  const selectedEl = container.querySelector('.selected');
+  if (selectedEl && wrap) {
+    const elLeft = selectedEl.offsetLeft;
+    const wrapWidth = wrap.offsetWidth;
+    wrap.scrollLeft = Math.max(0, elLeft - wrapWidth / 2 + WHITE_KEY_W / 2);
+  }
+}
+
+function initNotePickerControls() {
+  document.getElementById('notePickerCancel').addEventListener('click', closeNotePicker);
+  document.getElementById('notePickerModal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('notePickerModal')) closeNotePicker();
+  });
+  document.getElementById('notePickerOctDown').addEventListener('click', () => {
+    notePickerStartOctave = Math.max(0, notePickerStartOctave - 1);
+    renderPianoKeys();
+  });
+  document.getElementById('notePickerOctUp').addEventListener('click', () => {
+    notePickerStartOctave = Math.min(6, notePickerStartOctave + 1);
+    renderPianoKeys();
   });
 }
 
@@ -832,6 +941,7 @@ document.getElementById('startBtn').addEventListener('click', async () => {
   initControls();
   initKeyboardLayer();
   initShareControls();
+  initNotePickerControls();
   syncSettingsUI();
 
   // Show app, hide gate

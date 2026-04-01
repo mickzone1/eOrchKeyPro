@@ -60,7 +60,7 @@
         <!-- Key count -->
         <div class="setting-group">
           <div class="setting-label">KEYS &nbsp;<span id="keyCountVal">6</span></div>
-          <input type="range" id="keyCount" min="5" max="8" value="6" class="range-input" />
+          <input type="range" id="keyCount" min="1" max="16" value="6" class="range-input" />
         </div>
 
         <!-- Pitch mode -->
@@ -177,6 +177,22 @@
           <button id="btnCopyLink" class="preset-btn preset-btn--share">COPY LINK</button>
           <button id="btnCloseShare" class="preset-btn">CLOSE</button>
         </div>
+      </div>
+    </div>
+
+    <!-- Note picker modal (slides up from bottom) -->
+    <div id="notePickerModal" class="note-picker-modal hidden">
+      <div class="note-picker-box">
+        <div class="note-picker-title">SELECT NOTE — BUTTON <span id="notePickerIdx"></span></div>
+        <div class="note-picker-nav">
+          <button id="notePickerOctDown" class="preset-btn">◀</button>
+          <span id="notePickerOctLabel">C3 – B5</span>
+          <button id="notePickerOctUp" class="preset-btn">▶</button>
+        </div>
+        <div class="piano-scroll-wrap">
+          <div id="pianoKeys" class="piano-keys"></div>
+        </div>
+        <button id="notePickerCancel" class="preset-btn">CANCEL</button>
       </div>
     </div>
 
