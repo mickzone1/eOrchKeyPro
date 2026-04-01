@@ -54,6 +54,14 @@ html, body {
   filter: drop-shadow(0 0 18px rgba(212, 175, 55, 0.35));
 }
 
+.gate-appname {
+  font-size: clamp(1.4rem, 6vw, 2rem);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: var(--c-accent);
+  text-transform: uppercase;
+}
+
 .gate-sub {
   font-size: clamp(0.6rem, 2.5vw, 0.75rem);
   letter-spacing: 0.4em;
