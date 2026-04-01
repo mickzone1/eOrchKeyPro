@@ -97,6 +97,9 @@ const heldKeys = new Map(); // code → buttonIndex
 /** Index of the button row currently listening for a remap, or -1. */
 let remapTarget = -1;
 
+/** True when the app was loaded from a locked share URL — settings are inaccessible. */
+let settingsLocked = false;
+
 
 // ─── Application State ───────────────────────────────────────────
 
@@ -589,6 +592,7 @@ function renderManualPitchInputs() {
 // ─── Drawer ──────────────────────────────────────────────────────
 
 function openSettings() {
+  if (settingsLocked) return;
   document.getElementById('settingsDrawer').classList.add('open');
   document.getElementById('drawerBackdrop').classList.remove('hidden');
 }
@@ -812,9 +816,10 @@ const PRESET_KEYS = [
   'fmParams', 'keyMap',
 ];
 
-function encodeState() {
+function encodeState(locked = false) {
   const snapshot = {};
   PRESET_KEYS.forEach((k) => { snapshot[k] = state[k]; });
+  if (locked) snapshot.locked = true;
   const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(snapshot));
   return '#s=' + compressed;
 }
@@ -839,6 +844,7 @@ function loadStateFromURL() {
     if (p.gestureSensitivity)  Object.assign(state.gestureSensitivity, p.gestureSensitivity);
     if (p.fmParams)            Object.assign(state.fmParams, p.fmParams);
     if (p.keyMap)              state.keyMap              = p.keyMap;
+    if (p.locked === true)     settingsLocked            = true;
     return true;
   } catch (err) {
     console.warn('URL state decode error:', err);
@@ -846,10 +852,10 @@ function loadStateFromURL() {
   }
 }
 
-function showShareModal() {
+function showShareModal(locked = false) {
   // Build the shareable URL — works for both file:// (local) and https:// (deployed)
   const base = location.href.replace(/#.*$/, '');
-  const url = base + encodeState();
+  const url = base + encodeState(locked);
 
   document.getElementById('shareUrl').value = url;
 
@@ -881,7 +887,21 @@ function hideShareModal() {
 function initShareControls() {
   document.getElementById('btnShare').addEventListener('click', () => {
     closeSettings();
-    showShareModal();
+    // Reset lock toggle to OFF each time the modal opens
+    const toggle = document.getElementById('btnLockToggle');
+    toggle.dataset.locked = 'false';
+    toggle.setAttribute('aria-pressed', 'false');
+    toggle.textContent = 'OFF';
+    showShareModal(false);
+  });
+
+  document.getElementById('btnLockToggle').addEventListener('click', () => {
+    const toggle = document.getElementById('btnLockToggle');
+    const newState = toggle.dataset.locked !== 'true';
+    toggle.dataset.locked = String(newState);
+    toggle.setAttribute('aria-pressed', String(newState));
+    toggle.textContent = newState ? 'ON' : 'OFF';
+    showShareModal(newState);
   });
 
   document.getElementById('btnCloseShare').addEventListener('click', hideShareModal);
@@ -947,4 +967,7 @@ document.getElementById('startBtn').addEventListener('click', async () => {
   // Show app, hide gate
   document.getElementById('audioGate').style.display = 'none';
   document.getElementById('app').classList.remove('hidden');
+  if (settingsLocked) {
+    document.getElementById('settingsBtn').style.display = 'none';
+  }
 });

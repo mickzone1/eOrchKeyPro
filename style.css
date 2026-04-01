@@ -646,6 +646,39 @@ html, body {
 }
 .share-actions .preset-btn { flex: 1; }
 
+/* ─── Share Modal — Lock toggle ─────────────────── */
+.share-lock-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 10px;
+}
+.share-lock-label {
+  font-size: 0.58rem;
+  letter-spacing: 0.18em;
+  color: var(--c-muted);
+  text-transform: uppercase;
+  line-height: 1.4;
+}
+.lock-toggle {
+  flex-shrink: 0;
+  padding: 5px 12px;
+  background: none;
+  border: 1px solid var(--c-border2);
+  color: var(--c-muted);
+  font-family: inherit;
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.lock-toggle[data-locked="true"] {
+  border-color: var(--c-accent);
+  color: var(--c-accent);
+}
+.lock-toggle:active { background: var(--c-border2); }
+
 /* ─── Manual mode — note display row ───────────────── */
 .manual-note-display {
   flex: 1;
