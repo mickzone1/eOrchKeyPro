@@ -615,8 +615,6 @@ function syncSettingsUI() {
   // Sync select inputs to state (important after URL-load or preset-load)
   document.getElementById('keyCount').value  = state.buttonCount;
   document.getElementById('keyCountVal').textContent = state.buttonCount;
-  document.getElementById('dynamics').value = state.dynamics;
-  document.getElementById('dynamicsVal').textContent = state.dynamics;
   updateDynamicsIndicator();
   syncRootDisplay();
   document.getElementById('microtonalIntervals').value = state.microtonalIntervals.join(', ');
@@ -717,17 +715,6 @@ function initControls() {
   bindSegmented('solfegePicker', (value) => {
     state.noteDisplay = value;
     renderKeyGrid();
-  });
-
-  // ── Dynamics (master volume) ──
-  const dynamicsInput = document.getElementById('dynamics');
-  const dynamicsVal   = document.getElementById('dynamicsVal');
-  dynamicsInput.addEventListener('input', () => {
-    const v = Number(dynamicsInput.value);
-    state.dynamics = v;
-    dynamicsVal.textContent = v;
-    Tone.getDestination().volume.rampTo(v, 0.05);
-    updateDynamicsIndicator();
   });
 
   // ── Pitch mode ──
@@ -1070,6 +1057,17 @@ function fallbackCopy(text, done) {
 
 // Pre-populate state from URL hash before anything renders
 loadStateFromURL();
+
+// Wire gate dynamics slider (runs before audio context starts)
+(function () {
+  const slider = document.getElementById('gateDynamics');
+  slider.value = state.dynamics;
+  updateDynamicsIndicator();
+  slider.addEventListener('input', () => {
+    state.dynamics = Number(slider.value);
+    updateDynamicsIndicator();
+  });
+}());
 
 document.getElementById('startBtn').addEventListener('click', async () => {
   // Resume AudioContext (required by browser autoplay policy)

@@ -77,6 +77,21 @@ html, body {
 
 .gate-start:active { opacity: 0.75; }
 
+.gate-dynamics {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: min(72vw, 260px);
+  margin-top: 4px;
+}
+.gate-dynamics-slider {
+  width: 100%;
+}
+.gate-dynamics .dynamics-indicator {
+  justify-content: center;
+}
+
 .gate-hint {
   font-size: 0.65rem;
   letter-spacing: 0.12em;
@@ -243,15 +258,16 @@ html, body {
 .key.active .key-freq { color: var(--c-accent); opacity: 0.55; }
 
 .key-solfege {
-  font-size: clamp(0.55rem, 2vw, 0.72rem);
-  letter-spacing: 0.06em;
+  font-size: clamp(0.75rem, 3.5vw, 1.2rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
   color: var(--c-muted);
   margin-top: 1px;
   position: relative;
   z-index: 1;
   transition: color 0.04s;
 }
-.key.active .key-solfege { color: var(--c-accent); opacity: 0.8; }
+.key.active .key-solfege { color: var(--c-accent); opacity: 0.9; }
 
 /* Gesture indicator dot (center of key, shown when active) */
 .key-dot {

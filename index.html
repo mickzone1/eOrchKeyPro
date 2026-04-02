@@ -17,6 +17,16 @@
     <div class="gate-sub">KeyPro: Digital Mobile Instrument</div>
     <button id="startBtn" class="gate-start">TAP TO BEGIN</button>
     <div class="gate-hint">Piano · Flute · Vibraphone · FM Synth</div>
+    <div class="gate-dynamics">
+      <div class="dynamics-indicator">
+        <span class="dyn-bar"></span>
+        <span class="dyn-bar"></span>
+        <span class="dyn-bar"></span>
+        <span class="dyn-bar"></span>
+        <span class="dyn-bar"></span>
+      </div>
+      <input type="range" id="gateDynamics" min="-30" max="0" step="1" value="0" class="range-input gate-dynamics-slider" />
+    </div>
   </div>
 
   <!-- ── App shell (hidden until audio context started) ── -->
@@ -68,12 +78,6 @@
         <div class="setting-group">
           <div class="setting-label">KEYS &nbsp;<span id="keyCountVal">6</span></div>
           <input type="range" id="keyCount" min="1" max="16" value="6" class="range-input" />
-        </div>
-
-        <!-- Dynamics -->
-        <div class="setting-group">
-          <div class="setting-label">DYNAMICS &nbsp;<span id="dynamicsVal">0</span> dB</div>
-          <input type="range" id="dynamics" min="-30" max="0" step="1" value="0" class="range-input" />
         </div>
 
         <!-- Solfège -->
