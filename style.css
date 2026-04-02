@@ -563,6 +563,27 @@ html, body {
 }
 @keyframes blink { 50% { opacity: 0.3; } }
 
+/* ─── Colour picker ─────────────────────────────── */
+.colour-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 4px 0;
+}
+.colour-swatch {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.12s, transform 0.1s;
+}
+.colour-swatch.active {
+  border-color: var(--c-text);
+  transform: scale(1.2);
+}
+
 /* ─── Share button variant ──────────────────────────── */
 .preset-btn--share {
   color: var(--c-accent);

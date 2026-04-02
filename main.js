@@ -1,5 +1,11 @@
 'use strict';
 
+// Restore saved accent colour immediately (before first paint)
+(function () {
+  const saved = localStorage.getItem('eOrchKey_accent');
+  if (saved) document.documentElement.style.setProperty('--c-accent', saved);
+}());
+
 /* ═══════════════════════════════════════════════════════════════
    eOrchKey — main.js
    Audio engine: Tone.js 14.x (CDN)
@@ -537,6 +543,43 @@ function commitRemap(code) {
 }
 
 
+// ─── Accent Colour ───────────────────────────────────────────────
+
+const THEME_COLOURS = [
+  { name: 'Yellow',      value: '#d4ff00' },
+  { name: 'Red',         value: '#ff4d4d' },
+  { name: 'Orange',      value: '#ff8c00' },
+  { name: 'Green',       value: '#00ff88' },
+  { name: 'Light Green', value: '#90ff90' },
+  { name: 'Blue',        value: '#4d9fff' },
+  { name: 'Purple',      value: '#cc66ff' },
+  { name: 'White',       value: '#ffffff' },
+];
+
+function applyAccentColour(hex) {
+  document.documentElement.style.setProperty('--c-accent', hex);
+  localStorage.setItem('eOrchKey_accent', hex);
+  document.querySelectorAll('.colour-swatch').forEach((s) => {
+    s.classList.toggle('active', s.dataset.colour === hex);
+  });
+}
+
+function initColourPicker() {
+  const container = document.getElementById('colourPicker');
+  const current = localStorage.getItem('eOrchKey_accent') ?? '#d4ff00';
+  THEME_COLOURS.forEach(({ name, value }) => {
+    const btn = document.createElement('button');
+    btn.className = 'colour-swatch' + (value === current ? ' active' : '');
+    btn.style.background = value;
+    btn.dataset.colour = value;
+    btn.title = name;
+    btn.setAttribute('aria-label', name);
+    btn.addEventListener('click', () => applyAccentColour(value));
+    container.appendChild(btn);
+  });
+}
+
+
 // ─── Settings UI Sync ────────────────────────────────────────────
 
 function syncRootDisplay() {
@@ -932,6 +975,17 @@ function initShareControls() {
     showShareModal(newState);
   });
 
+  document.getElementById('btnDownloadQR').addEventListener('click', () => {
+    const canvas = document.querySelector('#qrContainer canvas');
+    const img    = document.querySelector('#qrContainer img');
+    const src    = canvas ? canvas.toDataURL('image/png') : img?.src;
+    if (!src) return;
+    const a = document.createElement('a');
+    a.href = src;
+    a.download = 'eorchkey-qr.png';
+    a.click();
+  });
+
   document.getElementById('btnCloseShare').addEventListener('click', hideShareModal);
 
   // Close on backdrop click (outside the box)
@@ -990,6 +1044,7 @@ document.getElementById('startBtn').addEventListener('click', async () => {
   initKeyboardLayer();
   initShareControls();
   initNotePickerControls();
+  initColourPicker();
   syncSettingsUI();
 
   // Show app, hide gate
