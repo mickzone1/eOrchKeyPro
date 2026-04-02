@@ -126,6 +126,8 @@ const state = {
     modulationIndex: 3,
     harmonicity: 1.5,
   },
+  dynamics: 0,                   // master volume offset in dB (−30 to 0)
+  accentColour: localStorage.getItem('eOrchKey_accent') ?? '#d4ff00',
   keyMap: [...DEFAULT_KEY_MAP],  // mutable copy, saved with presets
   computedPitches: [],           // [{ note, freq, label, detuneOffset }]
 };
@@ -546,8 +548,8 @@ function commitRemap(code) {
 // ─── Accent Colour ───────────────────────────────────────────────
 
 const THEME_COLOURS = [
-  { name: 'Yellow',      value: '#d4ff00' },
   { name: 'Red',         value: '#ff4d4d' },
+  { name: 'Yellow',      value: '#d4ff00' },
   { name: 'Orange',      value: '#ff8c00' },
   { name: 'Green',       value: '#00ff88' },
   { name: 'Light Green', value: '#90ff90' },
@@ -557,6 +559,7 @@ const THEME_COLOURS = [
 ];
 
 function applyAccentColour(hex) {
+  state.accentColour = hex;
   document.documentElement.style.setProperty('--c-accent', hex);
   localStorage.setItem('eOrchKey_accent', hex);
   document.querySelectorAll('.colour-swatch').forEach((s) => {
@@ -566,7 +569,7 @@ function applyAccentColour(hex) {
 
 function initColourPicker() {
   const container = document.getElementById('colourPicker');
-  const current = localStorage.getItem('eOrchKey_accent') ?? '#d4ff00';
+  const current = state.accentColour;
   THEME_COLOURS.forEach(({ name, value }) => {
     const btn = document.createElement('button');
     btn.className = 'colour-swatch' + (value === current ? ' active' : '');
@@ -594,6 +597,8 @@ function syncSettingsUI() {
   // Sync select inputs to state (important after URL-load or preset-load)
   document.getElementById('keyCount').value  = state.buttonCount;
   document.getElementById('keyCountVal').textContent = state.buttonCount;
+  document.getElementById('dynamics').value = state.dynamics;
+  document.getElementById('dynamicsVal').textContent = state.dynamics;
   syncRootDisplay();
   document.getElementById('microtonalIntervals').value = state.microtonalIntervals.join(', ');
 
@@ -686,6 +691,16 @@ function initControls() {
     renderKeyGrid();
     renderManualPitchInputs();
     renderKeyMapRows();
+  });
+
+  // ── Dynamics (master volume) ──
+  const dynamicsInput = document.getElementById('dynamics');
+  const dynamicsVal   = document.getElementById('dynamicsVal');
+  dynamicsInput.addEventListener('input', () => {
+    const v = Number(dynamicsInput.value);
+    state.dynamics = v;
+    dynamicsVal.textContent = v;
+    Tone.getDestination().volume.rampTo(v, 0.05);
   });
 
   // ── Pitch mode ──
@@ -875,7 +890,7 @@ function initNotePickerControls() {
     notePickerStartOctave = Math.min(6, notePickerStartOctave + 1);
     renderPianoKeys();
   });
-  document.getElementById('btnPickRoot').addEventListener('click', openRootPicker);
+  document.getElementById('rootNoteDisplay').addEventListener('click', openRootPicker);
 }
 
 
@@ -884,7 +899,7 @@ function initNotePickerControls() {
 const PRESET_KEYS = [
   'instrument', 'buttonCount', 'pitchMode', 'scale',
   'manualPitches', 'microtonalIntervals', 'gestureSensitivity',
-  'fmParams', 'keyMap',
+  'fmParams', 'keyMap', 'dynamics', 'accentColour',
 ];
 
 function encodeState(locked = false) {
@@ -915,6 +930,8 @@ function loadStateFromURL() {
     if (p.gestureSensitivity)  Object.assign(state.gestureSensitivity, p.gestureSensitivity);
     if (p.fmParams)            Object.assign(state.fmParams, p.fmParams);
     if (p.keyMap)              state.keyMap              = p.keyMap;
+    if (typeof p.dynamics === 'number') state.dynamics  = p.dynamics;
+    if (p.accentColour)        applyAccentColour(p.accentColour);
     if (p.locked === true)     settingsLocked            = true;
     return true;
   } catch (err) {
@@ -1028,6 +1045,7 @@ loadStateFromURL();
 document.getElementById('startBtn').addEventListener('click', async () => {
   // Resume AudioContext (required by browser autoplay policy)
   await Tone.start();
+  Tone.getDestination().volume.value = state.dynamics;
   // Override iOS silent-mode mute — treat app as a media playback app (iOS 16.4+)
   if (navigator.audioSession) navigator.audioSession.type = 'playback';
 

@@ -835,6 +835,25 @@ html, body {
 .pk-black.selected { background: var(--c-accent); }
 .pk-black:not(.selected):active { background: #1a1a1a; }
 
+/* ─── Root note tappable button ─────────────────── */
+.root-note-btn {
+  width: 100%;
+  background: none;
+  border: 1px solid var(--c-accent);
+  color: var(--c-accent);
+  font-family: inherit;
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;
+  padding: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+}
+.root-note-btn:active {
+  background: var(--c-accent);
+  color: #000;
+}
+
 /* ─── Note picker action row ────────────────────── */
 .note-picker-actions {
   display: flex;

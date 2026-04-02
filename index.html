@@ -63,6 +63,12 @@
           <input type="range" id="keyCount" min="1" max="16" value="6" class="range-input" />
         </div>
 
+        <!-- Dynamics -->
+        <div class="setting-group">
+          <div class="setting-label">DYNAMICS &nbsp;<span id="dynamicsVal">0</span> dB</div>
+          <input type="range" id="dynamics" min="-30" max="0" step="1" value="0" class="range-input" />
+        </div>
+
         <!-- Pitch mode -->
         <div class="setting-group">
           <div class="setting-label">PITCH MODE</div>
@@ -75,10 +81,7 @@
         <!-- Scales panel -->
         <div id="scalePanel" class="setting-group">
           <div class="setting-label">ROOT NOTE</div>
-          <div class="manual-row">
-            <span id="rootNoteDisplay" class="manual-note-display">C4</span>
-            <button id="btnPickRoot" class="manual-pick-btn">CHANGE</button>
-          </div>
+          <button id="rootNoteDisplay" class="root-note-btn">C4</button>
           <div class="setting-label mt8">SCALE</div>
           <div class="segmented wrap" id="scalePicker">
             <button class="seg-btn" data-value="chromatic">Chromatic</button>
