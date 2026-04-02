@@ -1058,16 +1058,6 @@ function fallbackCopy(text, done) {
 // Pre-populate state from URL hash before anything renders
 loadStateFromURL();
 
-// Wire gate dynamics slider (runs before audio context starts)
-(function () {
-  const slider = document.getElementById('gateDynamics');
-  slider.value = state.dynamics;
-  updateDynamicsIndicator();
-  slider.addEventListener('input', () => {
-    state.dynamics = Number(slider.value);
-    updateDynamicsIndicator();
-  });
-}());
 
 document.getElementById('startBtn').addEventListener('click', async () => {
   // Resume AudioContext (required by browser autoplay policy)
@@ -1097,6 +1087,16 @@ document.getElementById('startBtn').addEventListener('click', async () => {
   document.getElementById('app').classList.remove('hidden');
   document.getElementById('appVersion').textContent = 'v' + APP_VERSION;
   updateDynamicsIndicator();
+
+  // Make topbar dynamics bars tappable — bar i sets volume to -24+(i*6) dB
+  document.querySelectorAll('#dynamicsIndicator .dyn-bar').forEach((bar, i) => {
+    bar.addEventListener('click', () => {
+      const v = -24 + i * 6;   // bar 0=−24, 1=−18, 2=−12, 3=−6, 4=0
+      state.dynamics = v;
+      Tone.getDestination().volume.rampTo(v, 0.1);
+      updateDynamicsIndicator();
+    });
+  });
   if (settingsLocked) {
     document.getElementById('settingsBtn').style.display = 'none';
   }

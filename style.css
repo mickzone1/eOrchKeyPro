@@ -77,21 +77,6 @@ html, body {
 
 .gate-start:active { opacity: 0.75; }
 
-.gate-dynamics {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  width: min(72vw, 260px);
-  margin-top: 4px;
-}
-.gate-dynamics-slider {
-  width: 100%;
-}
-.gate-dynamics .dynamics-indicator {
-  justify-content: center;
-}
-
 .gate-hint {
   font-size: 0.65rem;
   letter-spacing: 0.12em;
@@ -149,6 +134,12 @@ html, body {
 .dyn-bar:nth-child(4) { height: 11px; }
 .dyn-bar:nth-child(5) { height: 14px; }
 .dyn-bar.active { background: var(--c-accent); }
+
+#dynamicsIndicator .dyn-bar {
+  cursor: pointer;
+  transition: background 0.12s, transform 0.1s;
+}
+#dynamicsIndicator .dyn-bar:active { transform: scaleY(1.15); }
 
 .topbar-instrument {
   font-size: 0.62rem;
