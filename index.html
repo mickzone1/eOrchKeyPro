@@ -32,7 +32,15 @@
         <span class="dyn-bar"></span>
         <span class="dyn-bar"></span>
       </div>
-      <div class="topbar-instrument" id="instrumentBadge">PIANO</div>
+      <div class="topbar-instrument-wrap">
+        <button class="topbar-instrument" id="instrumentBadge" aria-haspopup="true" aria-expanded="false">PIANO ▾</button>
+        <div class="instrument-dropdown hidden" id="instrumentDropdown">
+          <button class="instr-opt" data-value="piano">Piano</button>
+          <button class="instr-opt" data-value="flute">Flute</button>
+          <button class="instr-opt" data-value="vibraphone">Vibes</button>
+          <button class="instr-opt" data-value="fmSynth">FM Synth</button>
+        </div>
+      </div>
       <button id="settingsBtn" class="settings-btn" aria-label="Open settings">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
           <circle cx="12" cy="12" r="3"/>

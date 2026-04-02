@@ -64,13 +64,13 @@ html, body {
 .gate-start {
   margin-top: 14px;
   padding: 18px 52px;
-  background: var(--c-accent);
-  color: #000;
+  background: transparent;
+  color: var(--c-muted);
   font-family: inherit;
   font-size: clamp(0.85rem, 3vw, 1rem);
   font-weight: 700;
   letter-spacing: 0.18em;
-  border: none;
+  border: 1px solid var(--c-muted);
   cursor: pointer;
   transition: opacity 0.15s;
 }
@@ -141,14 +141,50 @@ html, body {
 }
 #dynamicsIndicator .dyn-bar:active { transform: scaleY(1.15); }
 
+.topbar-instrument-wrap {
+  position: relative;
+}
+
 .topbar-instrument {
   font-size: 0.62rem;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.18em;
   color: var(--c-accent);
   border: 1px solid var(--c-accent);
   padding: 3px 9px;
   line-height: 1.4;
+  background: none;
+  font-family: inherit;
+  cursor: pointer;
 }
+
+.instrument-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border2);
+  z-index: 200;
+  min-width: 110px;
+}
+
+.instrument-dropdown.hidden { display: none; }
+
+.instr-opt {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  color: var(--c-text);
+  font-family: inherit;
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-align: left;
+  cursor: pointer;
+}
+
+.instr-opt:hover  { background: var(--c-surface2); }
+.instr-opt.active { color: var(--c-accent); }
 
 .settings-btn {
   background: none;

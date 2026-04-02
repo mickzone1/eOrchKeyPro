@@ -628,7 +628,10 @@ function syncRootDisplay() {
 
 function syncSettingsUI() {
   const BADGE = { piano: 'PIANO', flute: 'FLUTE', vibraphone: 'VIBES', fmSynth: 'FM SYNTH' };
-  document.getElementById('instrumentBadge').textContent = BADGE[state.instrument] ?? 'SYNTH';
+  document.getElementById('instrumentBadge').textContent = (BADGE[state.instrument] ?? 'SYNTH') + ' ▾';
+  document.querySelectorAll('#instrumentDropdown .instr-opt').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.value === state.instrument);
+  });
 
   // Sync select inputs to state (important after URL-load or preset-load)
   document.getElementById('keyCount').value  = state.buttonCount;
@@ -700,6 +703,29 @@ function initControls() {
   document.getElementById('settingsBtn').onclick = openSettings;
   document.getElementById('closeDrawer').onclick = closeSettings;
   document.getElementById('drawerBackdrop').onclick = closeSettings;
+
+  // ── Instrument badge dropdown ──
+  const instrBadge = document.getElementById('instrumentBadge');
+  const instrDropdown = document.getElementById('instrumentDropdown');
+  instrBadge.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const open = !instrDropdown.classList.contains('hidden');
+    instrDropdown.classList.toggle('hidden', open);
+    instrBadge.setAttribute('aria-expanded', String(!open));
+  });
+  instrDropdown.querySelectorAll('.instr-opt').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.instrument = btn.dataset.value;
+      engine.switchInstrument(btn.dataset.value);
+      instrDropdown.classList.add('hidden');
+      instrBadge.setAttribute('aria-expanded', 'false');
+      syncSettingsUI();
+    });
+  });
+  document.addEventListener('click', () => {
+    instrDropdown.classList.add('hidden');
+    instrBadge.setAttribute('aria-expanded', 'false');
+  });
 
   // ── Segmented helper ──
   function bindSegmented(containerId, onChange) {
