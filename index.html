@@ -74,8 +74,8 @@
         <div class="setting-group">
           <div class="setting-label">SOLFÈGE ON KEYS</div>
           <div class="segmented" id="solfegePicker">
-            <button class="seg-btn active" data-value="note">Note</button>
-            <button class="seg-btn" data-value="both">Both</button>
+            <button class="seg-btn" data-value="note">Note</button>
+            <button class="seg-btn active" data-value="both">Both</button>
             <button class="seg-btn" data-value="solfege">Solfège</button>
           </div>
         </div>
@@ -117,9 +117,19 @@
 
         <!-- Gesture sensitivity -->
         <div class="setting-group">
-          <div class="setting-label">Y-AXIS SENSITIVITY (Filter Cutoff) &nbsp;<span id="ySensVal">1.0</span></div>
+          <div class="setting-label">FILTER CUTOFF (Y-AXIS)</div>
+          <div class="segmented" id="filterToggle">
+            <button class="seg-btn" data-value="on">ON</button>
+            <button class="seg-btn active" data-value="off">OFF</button>
+          </div>
+          <div class="setting-label mt8">SENSITIVITY &nbsp;<span id="ySensVal">1.0</span></div>
           <input type="range" id="ySens" min="0.1" max="3" step="0.1" value="1.0" class="range-input" />
-          <div class="setting-label mt8">X-AXIS SENSITIVITY (Pitch Bend) &nbsp;<span id="xSensVal">1.0</span></div>
+          <div class="setting-label mt8">PITCH BEND (X-AXIS)</div>
+          <div class="segmented" id="pitchBendToggle">
+            <button class="seg-btn" data-value="on">ON</button>
+            <button class="seg-btn active" data-value="off">OFF</button>
+          </div>
+          <div class="setting-label mt8">SENSITIVITY &nbsp;<span id="xSensVal">1.0</span></div>
           <input type="range" id="xSens" min="0.1" max="3" step="0.1" value="1.0" class="range-input" />
         </div>
 

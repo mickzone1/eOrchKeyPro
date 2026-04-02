@@ -127,7 +127,7 @@ const state = {
   scale: { root: 'C', octave: 4, type: 'pentatonic' },
   manualPitches: ['C3','D3','E3','F3','G3','A3','B3','C4','D4','E4','F4','G4','A4','B4','C5','D5'],
   microtonalIntervals: [0, 75, 150, 225, 300, 375, 450, 525, 600, 675, 750, 825, 900, 975, 1050, 1125],
-  gestureSensitivity: { y: 1.0, x: 1.0 },
+  gestureSensitivity: { y: 1.0, x: 1.0, filterOn: false, pitchBendOn: false },
   fmParams: {
     attack: 0.01,
     decay: 0.3,
@@ -137,7 +137,7 @@ const state = {
     harmonicity: 1.5,
   },
   dynamics: 0,                   // master volume offset in dB (−30 to 0)
-  noteDisplay: 'note',           // 'note' | 'both' | 'solfege'
+  noteDisplay: 'both',           // 'note' | 'both' | 'solfege'
   accentColour: localStorage.getItem('eOrchKey_accent') ?? '#d4ff00',
   keyMap: [...DEFAULT_KEY_MAP],  // mutable copy, saved with presets
   computedPitches: [],           // [{ note, freq, label, detuneOffset }]
@@ -408,12 +408,16 @@ function renderKeyGrid() {
       if (!ptr) return;
 
       // Y-axis (upward slide = more filter open)
-      const dy = (ptr.originY - e.clientY) * state.gestureSensitivity.y;
-      engine.setFilterCutoff(mapRange(dy, -220, 220, 180, 14000));
+      if (state.gestureSensitivity.filterOn) {
+        const dy = (ptr.originY - e.clientY) * state.gestureSensitivity.y;
+        engine.setFilterCutoff(mapRange(dy, -220, 220, 180, 14000));
+      }
 
       // X-axis (rightward slide = sharper pitch)
-      const dx = (e.clientX - ptr.originX) * state.gestureSensitivity.x;
-      engine.setPitchBend(mapRange(dx, -220, 220, -3, 3));
+      if (state.gestureSensitivity.pitchBendOn) {
+        const dx = (e.clientX - ptr.originX) * state.gestureSensitivity.x;
+        engine.setPitchBend(mapRange(dx, -220, 220, -3, 3));
+      }
 
       // ── Key transition detection ──
       const el = document.elementFromPoint(e.clientX, e.clientY);
@@ -439,7 +443,7 @@ function renderKeyGrid() {
 
       engine.triggerRelease(ptr.pitch);
       activePointers.delete(e.pointerId);
-      btn.classList.remove('active');
+      keyButtonEl(ptr.keyIndex)?.classList.remove('active');
 
       // Reset expression only when the last finger lifts
       if (activePointers.size === 0) {
@@ -643,6 +647,8 @@ function syncSettingsUI() {
   activateSeg('pitchModePicker', state.pitchMode);
   activateSeg('scalePicker', state.scale.type);
   activateSeg('solfegePicker', state.noteDisplay);
+  activateSeg('filterToggle', state.gestureSensitivity.filterOn ? 'on' : 'off');
+  activateSeg('pitchBendToggle', state.gestureSensitivity.pitchBendOn ? 'on' : 'off');
 
   // Show/hide conditional panels
   document.getElementById('fmPanel').classList.toggle('hidden', state.instrument !== 'fmSynth');
@@ -772,6 +778,15 @@ function initControls() {
 
   bindRange('ySens', 'ySensVal', (v) => { state.gestureSensitivity.y = v; });
   bindRange('xSens', 'xSensVal', (v) => { state.gestureSensitivity.x = v; });
+
+  bindSegmented('filterToggle', (v) => {
+    state.gestureSensitivity.filterOn = (v === 'on');
+    if (!state.gestureSensitivity.filterOn) engine.resetFilter();
+  });
+  bindSegmented('pitchBendToggle', (v) => {
+    state.gestureSensitivity.pitchBendOn = (v === 'on');
+    if (!state.gestureSensitivity.pitchBendOn) engine.resetPitchBend();
+  });
 
   // ── FM synth params ──
   bindRange('modIndex',   'modIndexVal',   (v) => { state.fmParams.modulationIndex = v; engine.updateFMParams(); }, 1);
