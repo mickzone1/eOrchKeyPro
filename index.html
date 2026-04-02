@@ -69,6 +69,15 @@
           <input type="range" id="dynamics" min="-30" max="0" step="1" value="0" class="range-input" />
         </div>
 
+        <!-- Solfège -->
+        <div class="setting-group">
+          <div class="setting-label">SOLFÈGE ON KEYS</div>
+          <div class="segmented" id="solfegePicker">
+            <button class="seg-btn active" data-value="false">OFF</button>
+            <button class="seg-btn" data-value="true">ON</button>
+          </div>
+        </div>
+
         <!-- Pitch mode -->
         <div class="setting-group">
           <div class="setting-label">PITCH MODE</div>
@@ -156,6 +165,7 @@
         <div class="setting-group preset-row">
           <button id="btnShare" class="preset-btn preset-btn--share">SHARE ↗</button>
         </div>
+        <div class="app-version" id="appVersion"></div>
 
       </div><!-- /drawer-body -->
     </div><!-- /settings-drawer -->

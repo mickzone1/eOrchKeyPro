@@ -1,5 +1,7 @@
 'use strict';
 
+const APP_VERSION = '202604022351';
+
 // Restore saved accent colour immediately (before first paint)
 (function () {
   const saved = localStorage.getItem('eOrchKey_accent');
@@ -23,6 +25,14 @@
 // ─── Scale Engine ────────────────────────────────────────────────
 
 const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+const SOLFEGE = {
+  'C':'Do','C#':'Di','D':'Re','D#':'Ri','E':'Mi',
+  'F':'Fa','F#':'Fi','G':'Sol','G#':'Si','A':'La','A#':'Li','B':'Ti',
+};
+function getSolfege(noteStr) {
+  return SOLFEGE[noteStr.replace(/\d+$/, '')] ?? '';
+}
 
 const SCALE_INTERVALS = {
   chromatic:  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
@@ -127,6 +137,7 @@ const state = {
     harmonicity: 1.5,
   },
   dynamics: 0,                   // master volume offset in dB (−30 to 0)
+  showSolfege: false,
   accentColour: localStorage.getItem('eOrchKey_accent') ?? '#d4ff00',
   keyMap: [...DEFAULT_KEY_MAP],  // mutable copy, saved with presets
   computedPitches: [],           // [{ note, freq, label, detuneOffset }]
@@ -372,6 +383,7 @@ function renderKeyGrid() {
       <div class="key-dot"></div>
       ${kbdLabel ? `<div class="key-kbd">${kbdLabel}</div>` : ''}
       <div class="key-note">${pitch.label}</div>
+      ${state.showSolfege ? `<div class="key-solfege">${getSolfege(pitch.note)}</div>` : ''}
       <div class="key-freq">${Math.round(pitch.freq)} Hz</div>
     `;
 
@@ -611,6 +623,7 @@ function syncSettingsUI() {
   activateSeg('instrumentPicker', state.instrument);
   activateSeg('pitchModePicker', state.pitchMode);
   activateSeg('scalePicker', state.scale.type);
+  activateSeg('solfegePicker', String(state.showSolfege));
 
   // Show/hide conditional panels
   document.getElementById('fmPanel').classList.toggle('hidden', state.instrument !== 'fmSynth');
@@ -691,6 +704,12 @@ function initControls() {
     renderKeyGrid();
     renderManualPitchInputs();
     renderKeyMapRows();
+  });
+
+  // ── Solfège toggle ──
+  bindSegmented('solfegePicker', (value) => {
+    state.showSolfege = value === 'true';
+    renderKeyGrid();
   });
 
   // ── Dynamics (master volume) ──
@@ -899,7 +918,7 @@ function initNotePickerControls() {
 const PRESET_KEYS = [
   'instrument', 'buttonCount', 'pitchMode', 'scale',
   'manualPitches', 'microtonalIntervals', 'gestureSensitivity',
-  'fmParams', 'keyMap', 'dynamics', 'accentColour',
+  'fmParams', 'keyMap', 'dynamics', 'showSolfege', 'accentColour',
 ];
 
 function encodeState(locked = false) {
@@ -930,7 +949,8 @@ function loadStateFromURL() {
     if (p.gestureSensitivity)  Object.assign(state.gestureSensitivity, p.gestureSensitivity);
     if (p.fmParams)            Object.assign(state.fmParams, p.fmParams);
     if (p.keyMap)              state.keyMap              = p.keyMap;
-    if (typeof p.dynamics === 'number') state.dynamics  = p.dynamics;
+    if (typeof p.dynamics === 'number')  state.dynamics   = p.dynamics;
+    if (typeof p.showSolfege === 'boolean') state.showSolfege = p.showSolfege;
     if (p.accentColour)        applyAccentColour(p.accentColour);
     if (p.locked === true)     settingsLocked            = true;
     return true;
@@ -1068,6 +1088,7 @@ document.getElementById('startBtn').addEventListener('click', async () => {
   // Show app, hide gate
   document.getElementById('audioGate').style.display = 'none';
   document.getElementById('app').classList.remove('hidden');
+  document.getElementById('appVersion').textContent = 'v' + APP_VERSION;
   if (settingsLocked) {
     document.getElementById('settingsBtn').style.display = 'none';
   }

@@ -221,6 +221,17 @@ html, body {
 .key.active .key-note { color: var(--c-accent); }
 .key.active .key-freq { color: var(--c-accent); opacity: 0.55; }
 
+.key-solfege {
+  font-size: clamp(0.55rem, 2vw, 0.72rem);
+  letter-spacing: 0.06em;
+  color: var(--c-muted);
+  margin-top: 1px;
+  position: relative;
+  z-index: 1;
+  transition: color 0.04s;
+}
+.key.active .key-solfege { color: var(--c-accent); opacity: 0.8; }
+
 /* Gesture indicator dot (center of key, shown when active) */
 .key-dot {
   position: absolute;
@@ -582,6 +593,15 @@ html, body {
 .colour-swatch.active {
   border-color: var(--c-text);
   transform: scale(1.2);
+}
+
+/* ─── App version label ─────────────────────────────── */
+.app-version {
+  font-size: 0.55rem;
+  letter-spacing: 0.18em;
+  color: var(--c-muted);
+  text-align: center;
+  padding-bottom: 4px;
 }
 
 /* ─── Share button variant ──────────────────────────── */
