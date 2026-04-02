@@ -137,7 +137,7 @@ const state = {
     harmonicity: 1.5,
   },
   dynamics: 0,                   // master volume offset in dB (−30 to 0)
-  showSolfege: false,
+  noteDisplay: 'note',           // 'note' | 'both' | 'solfege'
   accentColour: localStorage.getItem('eOrchKey_accent') ?? '#d4ff00',
   keyMap: [...DEFAULT_KEY_MAP],  // mutable copy, saved with presets
   computedPitches: [],           // [{ note, freq, label, detuneOffset }]
@@ -382,8 +382,8 @@ function renderKeyGrid() {
     btn.innerHTML = `
       <div class="key-dot"></div>
       ${kbdLabel ? `<div class="key-kbd">${kbdLabel}</div>` : ''}
-      <div class="key-note">${pitch.label}</div>
-      ${state.showSolfege ? `<div class="key-solfege">${getSolfege(pitch.note)}</div>` : ''}
+      ${state.noteDisplay !== 'solfege' ? `<div class="key-note">${pitch.label}</div>` : ''}
+      ${state.noteDisplay !== 'note'    ? `<div class="key-solfege">${getSolfege(pitch.note)}</div>` : ''}
       <div class="key-freq">${Math.round(pitch.freq)} Hz</div>
     `;
 
@@ -597,6 +597,12 @@ function initColourPicker() {
 
 // ─── Settings UI Sync ────────────────────────────────────────────
 
+function updateDynamicsIndicator() {
+  const bars = document.querySelectorAll('.dyn-bar');
+  const activeBars = Math.round((state.dynamics + 30) / 30 * 5);
+  bars.forEach((bar, i) => bar.classList.toggle('active', i < activeBars));
+}
+
 function syncRootDisplay() {
   const el = document.getElementById('rootNoteDisplay');
   if (el) el.textContent = state.scale.root + state.scale.octave;
@@ -611,6 +617,7 @@ function syncSettingsUI() {
   document.getElementById('keyCountVal').textContent = state.buttonCount;
   document.getElementById('dynamics').value = state.dynamics;
   document.getElementById('dynamicsVal').textContent = state.dynamics;
+  updateDynamicsIndicator();
   syncRootDisplay();
   document.getElementById('microtonalIntervals').value = state.microtonalIntervals.join(', ');
 
@@ -623,7 +630,7 @@ function syncSettingsUI() {
   activateSeg('instrumentPicker', state.instrument);
   activateSeg('pitchModePicker', state.pitchMode);
   activateSeg('scalePicker', state.scale.type);
-  activateSeg('solfegePicker', String(state.showSolfege));
+  activateSeg('solfegePicker', state.noteDisplay);
 
   // Show/hide conditional panels
   document.getElementById('fmPanel').classList.toggle('hidden', state.instrument !== 'fmSynth');
@@ -706,9 +713,9 @@ function initControls() {
     renderKeyMapRows();
   });
 
-  // ── Solfège toggle ──
+  // ── Solfège / note display mode ──
   bindSegmented('solfegePicker', (value) => {
-    state.showSolfege = value === 'true';
+    state.noteDisplay = value;
     renderKeyGrid();
   });
 
@@ -720,6 +727,7 @@ function initControls() {
     state.dynamics = v;
     dynamicsVal.textContent = v;
     Tone.getDestination().volume.rampTo(v, 0.05);
+    updateDynamicsIndicator();
   });
 
   // ── Pitch mode ──
@@ -918,7 +926,7 @@ function initNotePickerControls() {
 const PRESET_KEYS = [
   'instrument', 'buttonCount', 'pitchMode', 'scale',
   'manualPitches', 'microtonalIntervals', 'gestureSensitivity',
-  'fmParams', 'keyMap', 'dynamics', 'showSolfege', 'accentColour',
+  'fmParams', 'keyMap', 'dynamics', 'noteDisplay', 'accentColour',
 ];
 
 function encodeState(locked = false) {
@@ -950,7 +958,8 @@ function loadStateFromURL() {
     if (p.fmParams)            Object.assign(state.fmParams, p.fmParams);
     if (p.keyMap)              state.keyMap              = p.keyMap;
     if (typeof p.dynamics === 'number')  state.dynamics   = p.dynamics;
-    if (typeof p.showSolfege === 'boolean') state.showSolfege = p.showSolfege;
+    if (p.noteDisplay)                       state.noteDisplay  = p.noteDisplay;
+    else if (p.showSolfege === true)          state.noteDisplay  = 'both'; // back-compat
     if (p.accentColour)        applyAccentColour(p.accentColour);
     if (p.locked === true)     settingsLocked            = true;
     return true;
@@ -1089,6 +1098,7 @@ document.getElementById('startBtn').addEventListener('click', async () => {
   document.getElementById('audioGate').style.display = 'none';
   document.getElementById('app').classList.remove('hidden');
   document.getElementById('appVersion').textContent = 'v' + APP_VERSION;
+  updateDynamicsIndicator();
   if (settingsLocked) {
     document.getElementById('settingsBtn').style.display = 'none';
   }

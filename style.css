@@ -114,6 +114,27 @@ html, body {
   flex: 1;
 }
 
+.dynamics-indicator {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+  padding: 0 2px;
+}
+.dyn-bar {
+  width: 4px;
+  background: var(--c-border2);
+  border-radius: 1px;
+  flex-shrink: 0;
+  transition: background 0.12s;
+}
+.dyn-bar:nth-child(1) { height: 4px; }
+.dyn-bar:nth-child(2) { height: 6px; }
+.dyn-bar:nth-child(3) { height: 9px; }
+.dyn-bar:nth-child(4) { height: 11px; }
+.dyn-bar:nth-child(5) { height: 14px; }
+.dyn-bar.active { background: var(--c-accent); }
+
 .topbar-instrument {
   font-size: 0.62rem;
   letter-spacing: 0.22em;
