@@ -409,13 +409,27 @@ function renderKeyGrid() {
 
       // Y-axis (upward slide = more filter open)
       const dy = (ptr.originY - e.clientY) * state.gestureSensitivity.y;
-      const cutoff = mapRange(dy, -220, 220, 180, 14000);
-      engine.setFilterCutoff(cutoff);
+      engine.setFilterCutoff(mapRange(dy, -220, 220, 180, 14000));
 
       // X-axis (rightward slide = sharper pitch)
       const dx = (e.clientX - ptr.originX) * state.gestureSensitivity.x;
-      const bend = mapRange(dx, -220, 220, -3, 3);
-      engine.setPitchBend(bend);
+      engine.setPitchBend(mapRange(dx, -220, 220, -3, 3));
+
+      // ── Key transition detection ──
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const newBtn = el?.closest('.key[data-index]');
+      const newIdx = newBtn ? Number(newBtn.dataset.index) : -1;
+      if (newIdx !== -1 && newIdx !== ptr.keyIndex) {
+        engine.triggerRelease(ptr.pitch);
+        keyButtonEl(ptr.keyIndex)?.classList.remove('active');
+        const newPitch = state.computedPitches[newIdx];
+        engine.triggerAttack(newPitch, 0.7);
+        keyButtonEl(newIdx)?.classList.add('active');
+        ptr.keyIndex = newIdx;
+        ptr.pitch = newPitch;
+        ptr.originX = e.clientX;
+        ptr.originY = e.clientY;
+      }
     });
 
     // ── Pointer Up / Cancel ──
