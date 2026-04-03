@@ -335,13 +335,13 @@ function mapRange(value, inMin, inMax, outMin, outMax) {
 }
 
 /**
- * Estimate velocity from PointerEvent contact geometry.
- * Falls back to 0.7 for mouse or when geometry is unavailable.
+ * Velocity from vertical tap position within a key element.
+ * Top of key = loud (1.0), bottom = soft (0.25).
  */
-function pointerVelocity(e) {
-  const area = (e.width ?? 0) * (e.height ?? 0);
-  if (area < 1) return 0.7; // mouse / stylus
-  return Math.max(0.1, Math.min(area / 2800, 1));
+function tapVelocity(e, btnEl) {
+  const rect = btnEl.getBoundingClientRect();
+  const relY = Math.max(0, Math.min((e.clientY - rect.top) / rect.height, 1));
+  return mapRange(relY, 0, 1, 1.0, 0.25);
 }
 
 
@@ -392,7 +392,7 @@ function renderKeyGrid() {
       e.preventDefault();
       btn.setPointerCapture(e.pointerId);
 
-      engine.triggerAttack(pitch, pointerVelocity(e));
+      engine.triggerAttack(pitch, tapVelocity(e, btn));
       activePointers.set(e.pointerId, {
         keyIndex: idx,
         pitch,
@@ -427,7 +427,7 @@ function renderKeyGrid() {
         engine.triggerRelease(ptr.pitch);
         keyButtonEl(ptr.keyIndex)?.classList.remove('active');
         const newPitch = state.computedPitches[newIdx];
-        engine.triggerAttack(newPitch, 0.7);
+        engine.triggerAttack(newPitch, tapVelocity(e, newBtn));
         keyButtonEl(newIdx)?.classList.add('active');
         ptr.keyIndex = newIdx;
         ptr.pitch = newPitch;
