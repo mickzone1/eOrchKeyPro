@@ -336,12 +336,14 @@ function mapRange(value, inMin, inMax, outMin, outMax) {
 
 /**
  * Velocity from vertical tap position within a key element.
- * Top of key = loud (1.0), bottom = soft (0.25).
+ * Top 15% and bottom 15% are dead zones (clamped to max/min).
+ * Active zone (middle 70%): loud (1.0) at top → soft (0.12) at bottom.
  */
 function tapVelocity(e, btnEl) {
   const rect = btnEl.getBoundingClientRect();
   const relY = Math.max(0, Math.min((e.clientY - rect.top) / rect.height, 1));
-  return mapRange(relY, 0, 1, 1.0, 0.25);
+  const zoneY = Math.max(0, Math.min((relY - 0.15) / 0.70, 1));
+  return mapRange(zoneY, 0, 1, 1.0, 0.12);
 }
 
 
