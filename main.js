@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '202604031703';
+const APP_VERSION = '202604031714';
 
 // Restore saved accent colour immediately (before first paint)
 (function () {
@@ -240,6 +240,7 @@ class AudioEngine {
     };
 
     this.synth = (PRESETS[type] ?? PRESETS.piano)();
+    this._baseVolume = this.synth.volume.value;
     this.synth.maxPolyphony = 16;
     this.synth.connect(this.filter);
   }
@@ -272,12 +273,14 @@ class AudioEngine {
    */
   triggerAttack(pitch, velocity = 0.7) {
     if (!this.synth || !pitch?.note) return;
-    // Apply microtonal detuning before attack
     if (pitch.detuneOffset !== 0) {
       this.synth.set({ detune: Math.round(pitch.detuneOffset) });
     }
+    const v = Math.max(0.05, Math.min(velocity, 1));
+    // Explicitly apply velocity for all instruments regardless of Tone.js internals
+    this.synth.volume.value = this._baseVolume + 20 * Math.log10(v);
     try {
-      this.synth.triggerAttack(pitch.note, Tone.now(), Math.max(0.05, Math.min(velocity, 1)));
+      this.synth.triggerAttack(pitch.note, Tone.now(), v);
     } catch (e) {
       console.warn('triggerAttack:', e.message);
     }
