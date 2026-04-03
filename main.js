@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '202604032047';
+const APP_VERSION = '202604032054';
 
 // ─── Supabase Configuration ───────────────────────────────────────
 // Replace these placeholders after creating your Supabase project.
@@ -1342,12 +1342,19 @@ function initAccountControls() {
   document.getElementById('btnSendMagicLink').addEventListener('click', async () => {
     const email  = document.getElementById('teacherEmail').value.trim();
     const status = document.getElementById('authStatus');
-    if (!email) return;
+    const btn    = document.getElementById('btnSendMagicLink');
+    if (!email) { status.textContent = 'Please enter your email.'; return; }
+    btn.disabled = true;
+    btn.textContent = 'SENDING…';
+    status.textContent = '';
     try {
       await signIn(email);
-      status.textContent = 'Check your email for the magic link!';
+      status.textContent = 'Magic link sent — check your email!';
+      btn.textContent = 'SENT ✓';
     } catch (e) {
       status.textContent = 'Error: ' + e.message;
+      btn.disabled = false;
+      btn.textContent = 'SEND MAGIC LINK';
     }
   });
 
@@ -1382,19 +1389,6 @@ function initAccountControls() {
     }
   });
 
-  // Student join button on gate
-  document.getElementById('joinClassBtn').addEventListener('click', async () => {
-    const code = document.getElementById('classCodeInput').value.trim();
-    if (code.length === 6) await applyClass(code);
-  });
-
-  // Allow pressing Enter in the code input
-  document.getElementById('classCodeInput').addEventListener('keydown', async (e) => {
-    if (e.key === 'Enter') {
-      const code = e.target.value.trim();
-      if (code.length === 6) await applyClass(code);
-    }
-  });
 }
 
 // ─── Bootstrap ───────────────────────────────────────────────────
@@ -1407,6 +1401,20 @@ loadStateFromURL();
 
 // Pre-load class from ?class= URL param (async, completes before user taps BEGIN)
 checkClassParam();
+
+// Wire gate JOIN button immediately (works before TAP TO BEGIN)
+if (sb) {
+  document.getElementById('joinClassBtn').addEventListener('click', async () => {
+    const code   = document.getElementById('classCodeInput').value.trim();
+    if (code.length === 6) await applyClass(code);
+  });
+  document.getElementById('classCodeInput').addEventListener('keydown', async (e) => {
+    if (e.key === 'Enter') {
+      const code = e.target.value.trim();
+      if (code.length === 6) await applyClass(code);
+    }
+  });
+}
 
 
 document.getElementById('startBtn').addEventListener('click', async () => {
