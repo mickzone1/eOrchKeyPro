@@ -240,6 +240,7 @@ class AudioEngine {
     };
 
     this.synth = (PRESETS[type] ?? PRESETS.piano)();
+    this.synth.maxPolyphony = 16;
     this.synth.connect(this.filter);
   }
 
