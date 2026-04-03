@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "VER=$(date +%Y%m%d%H%M) && sed -i '' \"s/const APP_VERSION = '[0-9]*'/const APP_VERSION = '$VER'/\" /Users/chihin/Documents/Claude/eOrchKey/main.js 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
+  }
+}
