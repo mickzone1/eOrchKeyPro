@@ -5,7 +5,9 @@
       "Bash(env)",
       "Skill(update-config)",
       "Skill(update-config:*)",
-      "Bash(bash -c 'VER=$\\(date +%Y%m%d%H%M\\) && sed -i '\\\\'''\\\\'' \"s/const APP_VERSION = '\\\\''[0-9]*'\\\\''/const APP_VERSION = '\\\\''$VER'\\\\''/\" /Users/chihin/Documents/Claude/eOrchKey/main.js && echo \"OK: updated to $VER\"')"
+      "Bash(bash -c 'VER=$\\(date +%Y%m%d%H%M\\) && sed -i '\\\\'''\\\\'' \"s/const APP_VERSION = '\\\\''[0-9]*'\\\\''/const APP_VERSION = '\\\\''$VER'\\\\''/\" /Users/chihin/Documents/Claude/eOrchKey/main.js && echo \"OK: updated to $VER\"')",
+      "Bash(git config:*)",
+      "Bash(du -sh /Users/chihin/Documents/Claude/eOrchKey/*)"
     ]
   }
 }

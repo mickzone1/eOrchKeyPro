@@ -952,5 +952,133 @@ html, body {
 }
 .note-picker-actions .preset-btn { flex: 1; }
 
+/* ─── Gate — class join ─────────────────────────────── */
+.gate-class-join {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.gate-class-divider {
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  color: var(--c-muted);
+}
+.gate-class-row { display: flex; gap: 8px; }
+.gate-class-input {
+  background: none;
+  border: 1px solid var(--c-muted);
+  color: var(--c-text);
+  font-family: inherit;
+  font-size: 1rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  padding: 8px 12px;
+  width: 130px;
+  text-align: center;
+}
+.gate-class-input::placeholder { color: var(--c-muted); letter-spacing: 0.2em; }
+.gate-class-btn {
+  background: none;
+  border: 1px solid var(--c-muted);
+  color: var(--c-muted);
+  font-family: inherit;
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s;
+}
+.gate-class-btn:active { color: var(--c-accent); border-color: var(--c-accent); }
+.gate-class-status {
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  color: var(--c-muted);
+  min-height: 1rem;
+}
+
+/* ─── Account section (teacher) ─────────────────────── */
+.auth-email-display {
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  color: var(--c-accent);
+  padding: 4px 0;
+}
+.auth-status {
+  font-size: 0.6rem;
+  color: var(--c-muted);
+  min-height: 1rem;
+  margin-top: 4px;
+}
+.account-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+.account-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--c-border2);
+  padding: 6px 8px;
+}
+.account-row-name {
+  flex: 1;
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  color: var(--c-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.account-row-code {
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  color: var(--c-accent);
+  margin-right: 4px;
+  min-width: 3.5rem;
+}
+.account-row-btn {
+  background: none;
+  border: 1px solid var(--c-border2);
+  color: var(--c-muted);
+  font-family: inherit;
+  font-size: 0.55rem;
+  letter-spacing: 0.12em;
+  padding: 3px 7px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.1s, border-color 0.1s;
+}
+.account-row-btn:hover  { border-color: var(--c-text); color: var(--c-text); }
+.account-row-btn--del   { border-color: #ff4d4d44; color: #ff4d4d88; }
+.account-row-btn--del:hover { border-color: #ff4d4d; color: #ff4d4d; }
+.account-empty {
+  font-size: 0.6rem;
+  color: var(--c-muted);
+  padding: 6px 0;
+}
+
+/* Inline create-class modal */
+.create-class-inline {
+  border: 1px solid var(--c-border2);
+  padding: 10px;
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.create-class-inline select {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border2);
+  color: var(--c-text);
+  font-family: inherit;
+  font-size: 0.7rem;
+  padding: 6px 8px;
+  width: 100%;
+}
+
 /* ─── Utility ───────────────────────────────────────── */
 .hidden { display: none !important; }

@@ -1,6 +1,13 @@
 'use strict';
 
-const APP_VERSION = '202604031916';
+const APP_VERSION = '202604032047';
+
+// ─── Supabase Configuration ───────────────────────────────────────
+// Replace these placeholders after creating your Supabase project.
+// The anon key is intentionally public — RLS is the security boundary.
+const SUPABASE_URL  = 'https://tshjhesxozwdpoxnqdrj.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRzaGpoZXN4b3p3ZHBveG5xZHJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyMTI4MDgsImV4cCI6MjA5MDc4ODgwOH0.k2VxoXWxPOT4AX77w7BFrWMj90accvbKVG3_gS5sJCc';
+const sb = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON) ?? null;
 
 // Restore saved accent colour immediately (before first paint)
 (function () {
@@ -986,6 +993,41 @@ function encodeState(locked = false) {
 }
 
 /**
+ * Shared merge logic — applies a plain state snapshot object onto `state`.
+ * Used by both loadStateFromURL() and applyStateSnapshot().
+ */
+function mergeStateSnapshot(p) {
+  if (p.instrument)                   state.instrument          = p.instrument;
+  if (p.buttonCount)                  state.buttonCount         = p.buttonCount;
+  if (p.pitchMode)                    state.pitchMode           = p.pitchMode;
+  if (p.scale)                        Object.assign(state.scale, p.scale);
+  if (p.manualPitches)                state.manualPitches       = p.manualPitches;
+  if (p.microtonalIntervals)          state.microtonalIntervals = p.microtonalIntervals;
+  if (p.gestureSensitivity)           Object.assign(state.gestureSensitivity, p.gestureSensitivity);
+  if (p.fmParams)                     Object.assign(state.fmParams, p.fmParams);
+  if (p.keyMap)                       state.keyMap              = p.keyMap;
+  if (typeof p.dynamics === 'number') state.dynamics            = p.dynamics;
+  if (p.noteDisplay)                  state.noteDisplay         = p.noteDisplay;
+  else if (p.showSolfege === true)    state.noteDisplay         = 'both'; // back-compat
+  if (p.accentColour)                 applyAccentColour(p.accentColour);
+}
+
+/**
+ * Apply a plain state snapshot after the app is already running
+ * (e.g. loading a saved preset from Supabase).
+ */
+function applyStateSnapshot(snapshot, locked = false) {
+  mergeStateSnapshot(snapshot);
+  if (locked) settingsLocked = true;
+  if (engine) {
+    recomputePitches();
+    renderKeyGrid();
+    syncSettingsUI();
+    if (settingsLocked) document.getElementById('settingsBtn').style.display = 'none';
+  }
+}
+
+/**
  * Merge URL-encoded state into `state` before the app starts.
  * Returns true if a valid state was found and loaded.
  */
@@ -996,20 +1038,8 @@ function loadStateFromURL() {
     const json = LZString.decompressFromEncodedURIComponent(hash.slice(3));
     if (!json) return false;
     const p = JSON.parse(json);
-    if (p.instrument)          state.instrument          = p.instrument;
-    if (p.buttonCount)         state.buttonCount         = p.buttonCount;
-    if (p.pitchMode)           state.pitchMode           = p.pitchMode;
-    if (p.scale)               Object.assign(state.scale, p.scale);
-    if (p.manualPitches)       state.manualPitches       = p.manualPitches;
-    if (p.microtonalIntervals) state.microtonalIntervals = p.microtonalIntervals;
-    if (p.gestureSensitivity)  Object.assign(state.gestureSensitivity, p.gestureSensitivity);
-    if (p.fmParams)            Object.assign(state.fmParams, p.fmParams);
-    if (p.keyMap)              state.keyMap              = p.keyMap;
-    if (typeof p.dynamics === 'number')  state.dynamics   = p.dynamics;
-    if (p.noteDisplay)                       state.noteDisplay  = p.noteDisplay;
-    else if (p.showSolfege === true)          state.noteDisplay  = 'both'; // back-compat
-    if (p.accentColour)        applyAccentColour(p.accentColour);
-    if (p.locked === true)     settingsLocked            = true;
+    mergeStateSnapshot(p);
+    if (p.locked === true) settingsLocked = true;
     return true;
   } catch (err) {
     console.warn('URL state decode error:', err);
@@ -1114,10 +1144,269 @@ function fallbackCopy(text, done) {
 }
 
 
+// ─── Supabase: Auth ──────────────────────────────────────────────
+
+function initSupabase() {
+  if (!sb) return;
+  sb.auth.onAuthStateChange((_event, session) => onAuthChange(session));
+  sb.auth.getSession().then(({ data: { session } }) => onAuthChange(session));
+}
+
+function onAuthChange(session) {
+  const loggedIn = Boolean(session?.user);
+  document.getElementById('teacherLoggedOut').classList.toggle('hidden',  loggedIn);
+  document.getElementById('teacherLoggedIn').classList.toggle('hidden', !loggedIn);
+  if (loggedIn) {
+    document.getElementById('teacherEmailDisplay').textContent = session.user.email;
+    loadPresets().then(renderPresetList);
+    loadClasses().then(renderClassList);
+  }
+}
+
+async function signIn(email) {
+  if (!sb) throw new Error('Supabase not configured');
+  const { error } = await sb.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: location.href.replace(/[?#].*$/, '') },
+  });
+  if (error) throw error;
+}
+
+// ─── Supabase: Presets ────────────────────────────────────────────
+
+async function savePreset(name) {
+  const { data: { user } } = await sb.auth.getUser();
+  const snap = {};
+  PRESET_KEYS.forEach((k) => { snap[k] = state[k]; });
+  const { error } = await sb.from('presets').insert({ owner_id: user.id, name, state_json: snap });
+  if (error) throw error;
+  renderPresetList(await loadPresets());
+}
+
+async function loadPresets() {
+  const { data } = await sb.from('presets').select('id, name').order('created_at', { ascending: false });
+  return data ?? [];
+}
+
+async function applyPresetById(id) {
+  const { data } = await sb.from('presets').select('state_json').eq('id', id).single();
+  if (data) applyStateSnapshot(data.state_json);
+}
+
+async function deletePreset(id) {
+  await sb.from('presets').delete().eq('id', id);
+  renderPresetList(await loadPresets());
+}
+
+// ─── Supabase: Classes ────────────────────────────────────────────
+
+function generateCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+}
+
+async function createClass(name, presetId, locked) {
+  const { data: { user } } = await sb.auth.getUser();
+  const { data: preset } = await sb.from('presets').select('state_json').eq('id', presetId).single();
+  let code, tries = 0;
+  while (tries++ < 10) {
+    code = generateCode();
+    const { error } = await sb.from('classes').insert({
+      owner_id: user.id, name, code,
+      preset_id: presetId, state_snapshot: preset.state_json, locked,
+    });
+    if (!error) break;
+    if (!error.message?.includes('unique')) throw error;
+  }
+  renderClassList(await loadClasses());
+  return code;
+}
+
+async function loadClasses() {
+  const { data } = await sb.from('classes')
+    .select('id, name, code, locked, active, preset_id, presets(name)')
+    .order('created_at', { ascending: false });
+  return data ?? [];
+}
+
+// Anon-readable via RLS (active = true)
+async function loadClass(code) {
+  if (!sb) return null;
+  const { data } = await sb.from('classes')
+    .select('locked, state_snapshot')
+    .eq('code', code.toUpperCase())
+    .eq('active', true)
+    .single();
+  return data ?? null;
+}
+
+async function applyClass(code) {
+  const status = document.getElementById('joinClassStatus');
+  status.textContent = 'Loading class…';
+  const cls = await loadClass(code);
+  if (!cls || !cls.state_snapshot) { status.textContent = 'Class not found.'; return; }
+  applyStateSnapshot(cls.state_snapshot, cls.locked);
+  status.textContent = 'Class loaded! Tap BEGIN to start.';
+}
+
+// Reads ?class= URL param on startup
+async function checkClassParam() {
+  const code = new URLSearchParams(location.search).get('class');
+  if (!code) return;
+  document.getElementById('classCodeInput').value = code.toUpperCase();
+  await applyClass(code);
+}
+
+// ─── Supabase: UI Rendering ───────────────────────────────────────
+
+function renderPresetList(presets) {
+  const el = document.getElementById('presetList');
+  el.innerHTML = presets.length
+    ? presets.map((p) => `
+        <div class="account-row">
+          <span class="account-row-name">${p.name}</span>
+          <button class="account-row-btn" data-action="load-preset" data-id="${p.id}">LOAD</button>
+          <button class="account-row-btn account-row-btn--del" data-action="delete-preset" data-id="${p.id}">✕</button>
+        </div>`).join('')
+    : '<div class="account-empty">No presets saved yet</div>';
+}
+
+function renderClassList(classes) {
+  const el = document.getElementById('classList');
+  el.innerHTML = classes.length
+    ? classes.map((c) => `
+        <div class="account-row">
+          <span class="account-row-code">${c.code}</span>
+          <span class="account-row-name">${c.name}</span>
+          <button class="account-row-btn" data-action="toggle-lock"
+                  data-id="${c.id}" data-locked="${c.locked}">${c.locked ? 'UNLOCK' : 'LOCK'}</button>
+          <button class="account-row-btn account-row-btn--del"
+                  data-action="delete-class" data-id="${c.id}">✕</button>
+        </div>`).join('')
+    : '<div class="account-empty">No classes yet</div>';
+}
+
+function openCreateClassModal(name, presets) {
+  // Remove any existing inline modal
+  document.getElementById('createClassInline')?.remove();
+
+  const wrap = document.createElement('div');
+  wrap.id = 'createClassInline';
+  wrap.className = 'create-class-inline';
+  wrap.innerHTML = `
+    <div class="setting-label">ASSIGN PRESET</div>
+    <select id="ccPresetSelect">
+      ${presets.map((p) => `<option value="${p.id}">${p.name}</option>`).join('')}
+    </select>
+    <div class="segmented" id="ccLockToggle">
+      <button class="seg-btn active" data-value="true">LOCK SETTINGS</button>
+      <button class="seg-btn" data-value="false">UNLOCKED</button>
+    </div>
+    <div class="preset-row mt8">
+      <button id="ccConfirm" class="preset-btn preset-btn--share" style="flex:2">CREATE</button>
+      <button id="ccCancel" class="preset-btn" style="flex:1">CANCEL</button>
+    </div>
+    <div id="ccStatus" class="auth-status"></div>
+  `;
+  document.getElementById('classList').after(wrap);
+
+  // Wire lock toggle inside this modal
+  wrap.querySelectorAll('#ccLockToggle .seg-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      wrap.querySelectorAll('#ccLockToggle .seg-btn').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  document.getElementById('ccCancel').addEventListener('click', () => wrap.remove());
+
+  document.getElementById('ccConfirm').addEventListener('click', async () => {
+    const presetId = document.getElementById('ccPresetSelect').value;
+    const locked   = wrap.querySelector('#ccLockToggle .seg-btn.active').dataset.value === 'true';
+    const status   = document.getElementById('ccStatus');
+    status.textContent = 'Creating…';
+    try {
+      const code = await createClass(name, presetId, locked);
+      status.textContent = `Created! Code: ${code}`;
+      document.getElementById('newClassName').value = '';
+      setTimeout(() => wrap.remove(), 2500);
+    } catch (e) {
+      status.textContent = 'Error: ' + e.message;
+    }
+  });
+}
+
+function initAccountControls() {
+  if (!sb) return;
+
+  document.getElementById('btnSendMagicLink').addEventListener('click', async () => {
+    const email  = document.getElementById('teacherEmail').value.trim();
+    const status = document.getElementById('authStatus');
+    if (!email) return;
+    try {
+      await signIn(email);
+      status.textContent = 'Check your email for the magic link!';
+    } catch (e) {
+      status.textContent = 'Error: ' + e.message;
+    }
+  });
+
+  document.getElementById('btnSavePreset').addEventListener('click', async () => {
+    const name = document.getElementById('newPresetName').value.trim() || 'Untitled';
+    await savePreset(name);
+    document.getElementById('newPresetName').value = '';
+  });
+
+  document.getElementById('btnCreateClass').addEventListener('click', async () => {
+    const name = document.getElementById('newClassName').value.trim();
+    if (!name) return;
+    openCreateClassModal(name, await loadPresets());
+  });
+
+  document.getElementById('btnSignOut').addEventListener('click', () => sb.auth.signOut());
+
+  // Delegated clicks on preset / class rows
+  document.getElementById('accountSection').addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const { action, id, locked } = btn.dataset;
+    if (action === 'load-preset')   await applyPresetById(id);
+    if (action === 'delete-preset') await deletePreset(id);
+    if (action === 'toggle-lock') {
+      await sb.from('classes').update({ locked: locked !== 'true' }).eq('id', id);
+      renderClassList(await loadClasses());
+    }
+    if (action === 'delete-class') {
+      await sb.from('classes').delete().eq('id', id);
+      renderClassList(await loadClasses());
+    }
+  });
+
+  // Student join button on gate
+  document.getElementById('joinClassBtn').addEventListener('click', async () => {
+    const code = document.getElementById('classCodeInput').value.trim();
+    if (code.length === 6) await applyClass(code);
+  });
+
+  // Allow pressing Enter in the code input
+  document.getElementById('classCodeInput').addEventListener('keydown', async (e) => {
+    if (e.key === 'Enter') {
+      const code = e.target.value.trim();
+      if (code.length === 6) await applyClass(code);
+    }
+  });
+}
+
 // ─── Bootstrap ───────────────────────────────────────────────────
+
+// Init Supabase auth listener and restore any existing session
+initSupabase();
 
 // Pre-populate state from URL hash before anything renders
 loadStateFromURL();
+
+// Pre-load class from ?class= URL param (async, completes before user taps BEGIN)
+checkClassParam();
 
 
 document.getElementById('startBtn').addEventListener('click', async () => {
@@ -1141,6 +1430,7 @@ document.getElementById('startBtn').addEventListener('click', async () => {
   initShareControls();
   initNotePickerControls();
   initColourPicker();
+  initAccountControls();
   syncSettingsUI();
 
   // Show app, hide gate

@@ -18,6 +18,16 @@
     <div class="gate-sub">Digital Mobile Instrument</div>
     <button id="startBtn" class="gate-start">TAP TO BEGIN</button>
     <div class="gate-hint">Piano · Flute · Vibraphone · FM Synth</div>
+    <div id="classJoinSection" class="gate-class-join">
+      <div class="gate-class-divider">— or —</div>
+      <div class="gate-class-row">
+        <input id="classCodeInput" class="gate-class-input" type="text"
+               maxlength="6" autocapitalize="characters" autocomplete="off"
+               spellcheck="false" placeholder="CLASS CODE" />
+        <button id="joinClassBtn" class="gate-class-btn">JOIN</button>
+      </div>
+      <div id="joinClassStatus" class="gate-class-status"></div>
+    </div>
   </div>
 
   <!-- ── App shell (hidden until audio context started) ── -->
@@ -188,6 +198,41 @@
         </div>
         <div class="app-version" id="appVersion"></div>
 
+        <!-- Teacher / Account -->
+        <div class="setting-group" id="accountSection">
+          <div class="setting-label">TEACHER ACCOUNT</div>
+
+          <div id="teacherLoggedOut">
+            <input id="teacherEmail" type="email" class="text-input" placeholder="your@email.com" autocomplete="email" />
+            <div class="preset-row mt8">
+              <button id="btnSendMagicLink" class="preset-btn preset-btn--share">SEND MAGIC LINK</button>
+            </div>
+            <div id="authStatus" class="auth-status"></div>
+          </div>
+
+          <div id="teacherLoggedIn" class="hidden">
+            <div id="teacherEmailDisplay" class="auth-email-display"></div>
+
+            <div class="setting-label mt8">MY PRESETS</div>
+            <div id="presetList" class="account-list"></div>
+            <div class="preset-row mt8">
+              <input id="newPresetName" type="text" class="text-input" placeholder="Preset name…" style="flex:2" />
+              <button id="btnSavePreset" class="preset-btn preset-btn--share" style="flex:1">SAVE CURRENT</button>
+            </div>
+
+            <div class="setting-label mt8">MY CLASSES</div>
+            <div id="classList" class="account-list"></div>
+            <div class="preset-row mt8">
+              <input id="newClassName" type="text" class="text-input" placeholder="Class name…" style="flex:2" />
+              <button id="btnCreateClass" class="preset-btn preset-btn--share" style="flex:1">NEW CLASS</button>
+            </div>
+
+            <div class="preset-row mt8">
+              <button id="btnSignOut" class="preset-btn">SIGN OUT</button>
+            </div>
+          </div>
+        </div>
+
       </div><!-- /drawer-body -->
     </div><!-- /settings-drawer -->
 
@@ -234,6 +279,7 @@
 
   </div><!-- /app -->
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
