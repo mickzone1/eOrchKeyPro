@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '202604031714';
+const APP_VERSION = '202604031916';
 
 // Restore saved accent colour immediately (before first paint)
 (function () {
