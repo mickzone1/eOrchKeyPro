@@ -407,16 +407,16 @@ function renderKeyGrid() {
       const ptr = activePointers.get(e.pointerId);
       if (!ptr) return;
 
-      // Y-axis (upward slide = more filter open)
-      if (state.gestureSensitivity.filterOn) {
-        const dy = (ptr.originY - e.clientY) * state.gestureSensitivity.y;
-        engine.setFilterCutoff(mapRange(dy, -220, 220, 180, 14000));
-      }
-
-      // X-axis (rightward slide = sharper pitch)
-      if (state.gestureSensitivity.pitchBendOn) {
-        const dx = (e.clientX - ptr.originX) * state.gestureSensitivity.x;
-        engine.setPitchBend(mapRange(dx, -220, 220, -3, 3));
+      // Expression only when 2+ fingers are on screen
+      if (activePointers.size >= 2) {
+        if (state.gestureSensitivity.filterOn) {
+          const dy = (ptr.originY - e.clientY) * state.gestureSensitivity.y;
+          engine.setFilterCutoff(mapRange(dy, -220, 220, 180, 14000));
+        }
+        if (state.gestureSensitivity.pitchBendOn) {
+          const dx = (e.clientX - ptr.originX) * state.gestureSensitivity.x;
+          engine.setPitchBend(mapRange(dx, -220, 220, -3, 3));
+        }
       }
 
       // ── Key transition detection ──
@@ -445,8 +445,8 @@ function renderKeyGrid() {
       activePointers.delete(e.pointerId);
       keyButtonEl(ptr.keyIndex)?.classList.remove('active');
 
-      // Reset expression only when the last finger lifts
-      if (activePointers.size === 0) {
+      // Reset expression when dropping to 1 finger or fewer
+      if (activePointers.size <= 1) {
         engine.resetPitchBend();
         engine.resetFilter();
       }
