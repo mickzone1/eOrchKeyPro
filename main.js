@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '202604050021';
+const APP_VERSION = '202604050025';
 
 // ─── OpenRouter AI Configuration ──────────────────────────────────
 const OPENROUTER_API_KEY = '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';

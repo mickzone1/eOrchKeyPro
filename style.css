@@ -524,6 +524,7 @@ html, body {
 .ai-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .ai-btn {
+  display: none; /* AI feature hidden — re-enable by removing this line */
   background: none;
   border: 1px solid var(--c-accent);
   color: var(--c-accent);
