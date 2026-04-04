@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '202604042206';
+const APP_VERSION = '202604042224';
 
 // ─── Supabase Configuration ───────────────────────────────────────
 // Replace these placeholders after creating your Supabase project.
@@ -435,15 +435,19 @@ function renderKeyGrid() {
         await new Promise((r) => setTimeout(r, 100));
         if (!engine) return;
       }
-      engine.triggerAttack(pitch, tapVelocity(e, btn));
+      const isExpression = activePointers.size >= 1;
+      if (!isExpression) {
+        engine.triggerAttack(pitch, tapVelocity(e, btn));
+        btn.classList.add('active');
+        moveDotTo(btn, e);
+      }
       activePointers.set(e.pointerId, {
         keyIndex: idx,
         pitch,
         originX: e.clientX,
         originY: e.clientY,
+        isExpression,
       });
-      btn.classList.add('active');
-      moveDotTo(btn, e);
     }, { passive: false });
 
     // ── Pointer Move (gesture expressions) ──
@@ -464,25 +468,26 @@ function renderKeyGrid() {
         }
       }
 
-      // ── Key transition detection ──
-      const el = document.elementFromPoint(e.clientX, e.clientY);
-      const newBtn = el?.closest('.key[data-index]');
-      const newIdx = newBtn ? Number(newBtn.dataset.index) : -1;
-      if (newIdx !== -1 && newIdx !== ptr.keyIndex) {
-        engine.triggerRelease(ptr.pitch);
-        resetDot(keyButtonEl(ptr.keyIndex));
-        keyButtonEl(ptr.keyIndex)?.classList.remove('active');
-        const newPitch = state.computedPitches[newIdx];
-        engine.triggerAttack(newPitch, tapVelocity(e, newBtn));
-        keyButtonEl(newIdx)?.classList.add('active');
-        moveDotTo(keyButtonEl(newIdx), e);
-        ptr.keyIndex = newIdx;
-        ptr.pitch = newPitch;
-        ptr.originX = e.clientX;
-        ptr.originY = e.clientY;
-      } else {
-        // Finger still on same key — track position
-        moveDotTo(keyButtonEl(ptr.keyIndex), e);
+      // ── Key transition + dot tracking (1st finger only) ──
+      if (!ptr.isExpression) {
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+        const newBtn = el?.closest('.key[data-index]');
+        const newIdx = newBtn ? Number(newBtn.dataset.index) : -1;
+        if (newIdx !== -1 && newIdx !== ptr.keyIndex) {
+          engine.triggerRelease(ptr.pitch);
+          resetDot(keyButtonEl(ptr.keyIndex));
+          keyButtonEl(ptr.keyIndex)?.classList.remove('active');
+          const newPitch = state.computedPitches[newIdx];
+          engine.triggerAttack(newPitch, tapVelocity(e, newBtn));
+          keyButtonEl(newIdx)?.classList.add('active');
+          moveDotTo(keyButtonEl(newIdx), e);
+          ptr.keyIndex = newIdx;
+          ptr.pitch = newPitch;
+          ptr.originX = e.clientX;
+          ptr.originY = e.clientY;
+        } else {
+          moveDotTo(keyButtonEl(ptr.keyIndex), e);
+        }
       }
     });
 
@@ -492,10 +497,12 @@ function renderKeyGrid() {
       const ptr = activePointers.get(e.pointerId);
       if (!ptr) return;
 
-      engine.triggerRelease(ptr.pitch);
+      if (!ptr.isExpression) {
+        engine.triggerRelease(ptr.pitch);
+        resetDot(keyButtonEl(ptr.keyIndex));
+        keyButtonEl(ptr.keyIndex)?.classList.remove('active');
+      }
       activePointers.delete(e.pointerId);
-      resetDot(keyButtonEl(ptr.keyIndex));
-      keyButtonEl(ptr.keyIndex)?.classList.remove('active');
 
       // Reset expression when dropping to 1 finger or fewer
       if (activePointers.size <= 1) {
