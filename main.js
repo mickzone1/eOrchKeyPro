@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '202604042224';
+const APP_VERSION = '202604042226';
 
 // ─── Supabase Configuration ───────────────────────────────────────
 // Replace these placeholders after creating your Supabase project.
@@ -363,15 +363,23 @@ function tapVelocity(e, btnEl) {
   return mapRange(zoneY, 0, 1, 1.0, 0.12);
 }
 
-/** Move the key-dot to the finger's position within a key button. */
+/** Move the key-dot to the finger's position within a key button.
+ *  Constrains motion to a single axis (horizontal OR vertical) — whichever
+ *  displacement from the button centre is larger. */
 function moveDotTo(btnEl, e) {
   const dot = btnEl?.querySelector('.key-dot');
   if (!dot) return;
   const rect = btnEl.getBoundingClientRect();
   const x = Math.max(10, Math.min(90, ((e.clientX - rect.left) / rect.width)  * 100));
   const y = Math.max(10, Math.min(90, ((e.clientY - rect.top)  / rect.height) * 100));
-  dot.style.left = x + '%';
-  dot.style.top  = y + '%';
+  // Lock to dominant axis relative to centre
+  if (Math.abs(x - 50) >= Math.abs(y - 50)) {
+    dot.style.left = x + '%';
+    dot.style.top  = '50%';
+  } else {
+    dot.style.left = '50%';
+    dot.style.top  = y + '%';
+  }
 }
 
 /** Reset the key-dot back to the CSS-defined centre position. */
