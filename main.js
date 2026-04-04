@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '202604041544';
+const APP_VERSION = '202604042156';
 
 // ─── Supabase Configuration ───────────────────────────────────────
 // Replace these placeholders after creating your Supabase project.
