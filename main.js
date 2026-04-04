@@ -1,9 +1,9 @@
 'use strict';
 
-const APP_VERSION = '202604050014';
+const APP_VERSION = '202604050021';
 
-// ─── DeepSeek AI Configuration ────────────────────────────────────
-const DEEPSEEK_API_KEY = 'sk-6bf2f75ace96400e82c1f11b909d62bc';
+// ─── OpenRouter AI Configuration ──────────────────────────────────
+const OPENROUTER_API_KEY = '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';
 const AI_SYSTEM_PROMPT = `You are the built-in help assistant for e-Orch KeyPro, a mobile web app for playing digital musical instruments in music education. Help users learn how to use the app. Keep answers concise — 2–4 sentences unless more detail is needed.
 
 App features:
@@ -843,13 +843,15 @@ async function sendToGemini(userText) {
         content: m.text,
       })),
     ];
-    const res = await fetch('https://api.deepseek.com/chat/completions', {
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+        'HTTP-Referer': 'https://mickzone1.github.io/eOrchKeyPro/',
+        'X-Title': 'e-Orch KeyPro',
       },
-      body: JSON.stringify({ model: 'deepseek-chat', messages }),
+      body: JSON.stringify({ model: 'deepseek/deepseek-chat', messages }),
     });
     const data = await res.json();
     if (!res.ok || data.error) {
