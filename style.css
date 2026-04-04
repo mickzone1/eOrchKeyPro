@@ -64,6 +64,7 @@ html, body {
 .gate-sub--title {
   font-size: clamp(1.4rem, 6vw, 2rem);
   letter-spacing: 0.22em;
+  text-transform: none;
   margin-bottom: -6px;
 }
 
@@ -1002,7 +1003,7 @@ html, body {
   letter-spacing: 0.2em;
   color: var(--c-muted);
 }
-.gate-class-row { display: flex; align-items: center; gap: 8px; margin-top: 20px; }
+.gate-class-row { display: flex; align-items: center; gap: 8px; margin-top: 15px; }
 .gate-class-input {
   background: none;
   border: 1px solid var(--c-muted);
