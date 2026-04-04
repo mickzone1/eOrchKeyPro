@@ -124,7 +124,7 @@ html, body {
 }
 
 .topbar-logo {
-  height: 26px;
+  height: 18px;
   width: auto;
   display: block;
   flex-shrink: 0;
@@ -141,16 +141,6 @@ html, body {
   min-width: 0;
 }
 
-.dynamics-wrap {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.dyn-speaker {
-  color: var(--c-border2);
-  flex-shrink: 0;
-}
 
 .dynamics-indicator {
   display: flex;
