@@ -1003,7 +1003,7 @@ html, body {
   letter-spacing: 0.2em;
   color: var(--c-muted);
 }
-.gate-class-row { display: flex; align-items: center; gap: 8px; margin-top: 15px; }
+.gate-class-row { display: flex; align-items: stretch; gap: 8px; margin-top: 15px; }
 .gate-class-input {
   background: none;
   border: 1px solid var(--c-muted);
