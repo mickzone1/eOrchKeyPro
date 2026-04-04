@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '202604050004';
+const APP_VERSION = '202604050008';
 
 // ─── Gemini AI Configuration ──────────────────────────────────────
 // Restrict this key to your domain (mickzone1.github.io) in Google Cloud Console.
@@ -837,24 +837,19 @@ async function sendToGemini(userText) {
   input.disabled   = true;
 
   try {
-    // Inject system context as opening exchange (gemini-pro doesn't support systemInstruction)
-    const systemTurn = [
-      { role: 'user',  parts: [{ text: GEMINI_SYSTEM_PROMPT }] },
-      { role: 'model', parts: [{ text: 'Understood. I\'m ready to help users with e-Orch KeyPro.' }] },
-    ];
-    const contents = [
-      ...systemTurn,
-      ...aiMessages.filter(m => !m.uiOnly).map(m => ({
-        role: m.role === 'user' ? 'user' : 'model',
-        parts: [{ text: m.text }],
-      })),
-    ];
+    const contents = aiMessages.filter(m => !m.uiOnly).map(m => ({
+      role: m.role === 'user' ? 'user' : 'model',
+      parts: [{ text: m.text }],
+    }));
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents }),
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: GEMINI_SYSTEM_PROMPT }] },
+          contents,
+        }),
       }
     );
     const data = await res.json();
