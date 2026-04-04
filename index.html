@@ -35,7 +35,10 @@
 
     <!-- Top bar -->
     <div class="topbar">
-      <span class="topbar-title">e-Orch KeyPro</span>
+      <div class="topbar-left">
+        <span class="topbar-title">e-Orch KeyPro</span>
+        <span id="teacherTopbarEmail" class="topbar-teacher-email hidden"></span>
+      </div>
       <div class="dynamics-indicator" id="dynamicsIndicator">
         <span class="dyn-bar"></span>
         <span class="dyn-bar"></span>
@@ -52,6 +55,7 @@
           <button class="instr-opt" data-value="fmSynth">FM Synth</button>
         </div>
       </div>
+      <span id="topbarClassCode" class="topbar-class-code hidden"></span>
       <button id="settingsBtn" class="settings-btn" aria-label="Open settings">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
           <circle cx="12" cy="12" r="3"/>

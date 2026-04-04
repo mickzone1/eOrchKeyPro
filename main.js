@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '202604041150';
+const APP_VERSION = '202604041159';
 
 // ─── Supabase Configuration ───────────────────────────────────────
 // Replace these placeholders after creating your Supabase project.
@@ -407,10 +407,15 @@ function renderKeyGrid() {
     `;
 
     // ── Pointer Down ──
-    btn.addEventListener('pointerdown', (e) => {
+    btn.addEventListener('pointerdown', async (e) => {
       e.preventDefault();
       btn.setPointerCapture(e.pointerId);
 
+      if (!engine) {
+        // Audio deferred (teacher auto-start flow) — wait briefly for resumeAudio handler
+        await new Promise((r) => setTimeout(r, 100));
+        if (!engine) return;
+      }
       engine.triggerAttack(pitch, tapVelocity(e, btn));
       activePointers.set(e.pointerId, {
         keyIndex: idx,
@@ -423,6 +428,7 @@ function renderKeyGrid() {
 
     // ── Pointer Move (gesture expressions) ──
     btn.addEventListener('pointermove', (e) => {
+      if (!engine) return;
       const ptr = activePointers.get(e.pointerId);
       if (!ptr) return;
 
@@ -457,6 +463,7 @@ function renderKeyGrid() {
 
     // ── Pointer Up / Cancel ──
     const onRelease = (e) => {
+      if (!engine) return;
       const ptr = activePointers.get(e.pointerId);
       if (!ptr) return;
 
@@ -516,6 +523,7 @@ function initKeyboardLayer() {
     heldKeys.set(e.code, idx);
     const pitch = state.computedPitches[idx];
     if (!pitch) return;
+    if (!engine) return;
 
     engine.triggerAttack(pitch, 0.7);
     keyButtonEl(idx)?.classList.add('active');
@@ -1030,7 +1038,10 @@ function applyStateSnapshot(snapshot, locked = false) {
     recomputePitches();
     renderKeyGrid();
     syncSettingsUI();
-    if (settingsLocked) document.getElementById('settingsBtn').style.display = 'none';
+    if (settingsLocked) {
+      document.getElementById('settingsBtn').style.display = 'none';
+      document.getElementById('instrumentBadge').classList.add('topbar-instrument--locked');
+    }
   }
 }
 
@@ -1161,13 +1172,68 @@ function initSupabase() {
 
 function onAuthChange(session) {
   const loggedIn = Boolean(session?.user);
-  document.getElementById('teacherLoggedOut').classList.toggle('hidden',  loggedIn);
+  document.getElementById('teacherLoggedOut').classList.toggle('hidden', loggedIn);
   document.getElementById('teacherLoggedIn').classList.toggle('hidden', !loggedIn);
+
+  const topbarEmail = document.getElementById('teacherTopbarEmail');
   if (loggedIn) {
     document.getElementById('teacherEmailDisplay').textContent = session.user.email;
+    topbarEmail.textContent = session.user.email;
+    topbarEmail.classList.remove('hidden');
     loadPresets().then(renderPresetList);
     loadClasses().then(renderClassList);
+    if (!appStarted) autoStartForTeacher();
+  } else {
+    topbarEmail.textContent = '';
+    topbarEmail.classList.add('hidden');
   }
+}
+
+function autoStartForTeacher() {
+  // Show interface immediately — AudioContext deferred to first user touch
+  appStarted = true;
+
+  recomputePitches();
+  renderKeyGrid();
+  initControls();
+  initKeyboardLayer();
+  initShareControls();
+  initNotePickerControls();
+  initColourPicker();
+  initAccountControls();
+  syncSettingsUI();
+
+  document.getElementById('audioGate').style.display = 'none';
+  document.getElementById('app').classList.remove('hidden');
+  document.getElementById('appVersion').textContent = 'v' + APP_VERSION;
+  updateDynamicsIndicator();
+
+  document.querySelectorAll('#dynamicsIndicator .dyn-bar').forEach((bar, i) => {
+    bar.addEventListener('click', () => {
+      const v = -24 + i * 6;
+      state.dynamics = v;
+      if (audioReady) Tone.getDestination().volume.rampTo(v, 0.1);
+      updateDynamicsIndicator();
+    });
+  });
+
+  if (settingsLocked) {
+    document.getElementById('settingsBtn').style.display = 'none';
+    document.getElementById('instrumentBadge').classList.add('topbar-instrument--locked');
+  }
+
+  // Resume AudioContext on first user touch (browser autoplay policy)
+  const resumeAudio = async () => {
+    if (audioReady) return;
+    await Tone.start();
+    if (navigator.audioSession) navigator.audioSession.type = 'playback';
+    Tone.getDestination().volume.value = state.dynamics;
+    engine = new AudioEngine();
+    if (state.instrument !== 'piano') engine.switchInstrument(state.instrument);
+    audioReady = true;
+    document.removeEventListener('pointerdown', resumeAudio);
+  };
+  document.addEventListener('pointerdown', resumeAudio);
 }
 
 async function signIn(email) {
@@ -1247,13 +1313,24 @@ async function loadClass(code) {
   return data ?? null;
 }
 
+function showTopbarClassCode(code) {
+  const el = document.getElementById('topbarClassCode');
+  el.textContent = code;
+  el.classList.remove('hidden');
+}
+
 async function applyClass(code) {
   const status = document.getElementById('joinClassStatus');
   status.textContent = 'Loading class…';
   const cls = await loadClass(code);
-  if (!cls || !cls.state_snapshot) { status.textContent = 'Class not found.'; return; }
+  if (!cls || !cls.state_snapshot) {
+    status.textContent = 'Class not found.';
+    return false;
+  }
   applyStateSnapshot(cls.state_snapshot, cls.locked);
-  status.textContent = 'Class loaded! Tap BEGIN to start.';
+  showTopbarClassCode(code.toUpperCase());
+  status.textContent = '';
+  return true;
 }
 
 // Reads ?class= URL param on startup
@@ -1412,13 +1489,19 @@ checkClassParam();
 // Wire gate JOIN button immediately (works before TAP TO BEGIN)
 if (sb) {
   document.getElementById('joinClassBtn').addEventListener('click', async () => {
-    const code   = document.getElementById('classCodeInput').value.trim();
-    if (code.length === 6) await applyClass(code);
+    const code = document.getElementById('classCodeInput').value.trim();
+    if (code.length !== 6) return;
+    await Tone.start(); // call within gesture before any awaits (Safari requirement)
+    const ok = await applyClass(code);
+    if (ok) await startApp();
   });
   document.getElementById('classCodeInput').addEventListener('keydown', async (e) => {
     if (e.key === 'Enter') {
       const code = e.target.value.trim();
-      if (code.length === 6) await applyClass(code);
+      if (code.length !== 6) return;
+      await Tone.start();
+      const ok = await applyClass(code);
+      if (ok) await startApp();
     }
   });
 }

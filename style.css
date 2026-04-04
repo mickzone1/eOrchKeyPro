@@ -113,11 +113,32 @@ html, body {
   background: var(--c-surface);
 }
 
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
 .topbar-title {
   font-size: 0.95rem;
   font-weight: 900;
   letter-spacing: 0.04em;
-  flex: 1;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.topbar-teacher-email {
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  color: var(--c-accent);
+  opacity: 0.8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .dynamics-indicator {
@@ -161,6 +182,22 @@ html, body {
   background: none;
   font-family: inherit;
   cursor: pointer;
+}
+
+.topbar-instrument--locked {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.topbar-class-code {
+  font-size: 0.58rem;
+  letter-spacing: 0.18em;
+  color: var(--c-accent);
+  border: 1px solid var(--c-border2);
+  padding: 3px 7px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .instrument-dropdown {
