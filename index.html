@@ -55,6 +55,7 @@
         </div>
       </div>
       <span id="topbarClassCode" class="topbar-class-code hidden"></span>
+      <button id="aiBtnTopbar" class="ai-btn" aria-label="Open AI tutor">AI</button>
       <button id="settingsBtn" class="settings-btn" aria-label="Open settings">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="4" y1="6" x2="20" y2="6"/>
@@ -241,6 +242,20 @@
 
       </div><!-- /drawer-body -->
     </div><!-- /settings-drawer -->
+
+    <!-- AI Tutor panel -->
+    <div id="aiPanel" class="ai-panel">
+      <div class="drawer-header">
+        <div class="drawer-handle"></div>
+        <span class="drawer-label">AI TUTOR</span>
+        <button id="closeAiPanel" class="drawer-close">✕</button>
+      </div>
+      <div class="ai-messages" id="aiMessages"></div>
+      <div class="ai-input-row">
+        <textarea id="aiInput" class="ai-input" placeholder="Ask me anything about the app…" rows="2"></textarea>
+        <button id="aiSendBtn" class="ai-send-btn">SEND</button>
+      </div>
+    </div>
 
     <!-- Backdrop (closes drawer on tap) -->
     <div id="drawerBackdrop" class="drawer-backdrop hidden"></div>

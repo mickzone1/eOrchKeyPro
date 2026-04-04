@@ -1,6 +1,27 @@
 'use strict';
 
-const APP_VERSION = '202604042230';
+const APP_VERSION = '202604042259';
+
+// ─── Gemini AI Configuration ──────────────────────────────────────
+// Restrict this key to your domain (mickzone1.github.io) in Google Cloud Console.
+const GEMINI_API_KEY = 'AIzaSyDNn7O7z_US65yrMcy6VisUGKZEroI18a4';
+const GEMINI_SYSTEM_PROMPT = `You are the built-in help assistant for e-Orch KeyPro, a mobile web app for playing digital musical instruments in music education. Help users learn how to use the app. Keep answers concise — 2–4 sentences unless more detail is needed.
+
+App features:
+- INSTRUMENTS: Piano, Flute, Vibraphone, FM Synth — tap the instrument badge in the top bar or change in Settings.
+- KEYS: 1–16 keys, set via the KEYS slider in Settings.
+- KEY LABELS: Independently show/hide Note name (e.g. C4), Solfège (Do/Re/Mi), and Frequency (Hz) — multi-select under KEY LABELS in Settings.
+- PITCH MODE — Scales: choose a root note and scale type (Chromatic, Major, Pentatonic, Minor, Microtonal). Manual: assign any pitch to each key individually.
+- DYNAMICS: Tap near the bottom of a key for louder notes, near the top for softer notes.
+- 2-FINGER GESTURES: Hold a note with one finger, then place a second finger — move it left/right for Filter Cutoff, up/down for Pitch Bend. Enable each in Settings.
+- FM SYNTH: Extra parameters appear in Settings when FM Synth is selected: Modulation Index, Harmonicity, and ADSR envelope controls.
+- KEYBOARD MAPPING: Assign computer keyboard keys to notes in Settings.
+- ACCENT COLOUR: Change the UI highlight colour in Settings.
+- TEACHER ACCOUNT: Sign in with a magic link (email). Save and load presets. Create classes with a shareable class code.
+- CLASS CODE: Students enter a 6-character code on the start screen to join a class and load the teacher's preset settings automatically.
+- SHARE: Generate a QR code or URL to share your current settings. Option to lock settings so recipients cannot change them.
+
+If asked about unrelated topics, politely redirect to app features.`;
 
 // ─── Supabase Configuration ───────────────────────────────────────
 // Replace these placeholders after creating your Supabase project.
@@ -767,12 +788,109 @@ function closeSettings() {
 }
 
 
+// ─── AI Tutor ─────────────────────────────────────────────────────
+
+const aiMessages = [];
+
+function openAiPanel() {
+  document.getElementById('aiPanel').classList.add('open');
+  document.getElementById('drawerBackdrop').classList.remove('hidden');
+  if (aiMessages.length === 0) {
+    aiMessages.push({ role: 'model', text: 'Hi! Ask me anything about how to use e-Orch KeyPro.' });
+    renderAiMessages();
+  }
+}
+
+function closeAiPanel() {
+  document.getElementById('aiPanel').classList.remove('open');
+  document.getElementById('drawerBackdrop').classList.add('hidden');
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function renderAiMessages() {
+  const container = document.getElementById('aiMessages');
+  container.innerHTML = aiMessages
+    .map(m => `<div class="ai-msg ai-msg--${m.role === 'user' ? 'user' : 'model'}">${escapeHtml(m.text)}</div>`)
+    .join('');
+  container.scrollTop = container.scrollHeight;
+}
+
+async function sendToGemini(userText) {
+  userText = userText.trim();
+  if (!userText) return;
+
+  aiMessages.push({ role: 'user', text: userText });
+  renderAiMessages();
+
+  const container = document.getElementById('aiMessages');
+  container.insertAdjacentHTML('beforeend', '<div class="ai-msg ai-msg--thinking" id="aiThinking">thinking…</div>');
+  container.scrollTop = container.scrollHeight;
+
+  const sendBtn = document.getElementById('aiSendBtn');
+  const input   = document.getElementById('aiInput');
+  sendBtn.disabled = true;
+  input.disabled   = true;
+
+  try {
+    const contents = aiMessages.map(m => ({
+      role: m.role === 'user' ? 'user' : 'model',
+      parts: [{ text: m.text }],
+    }));
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: GEMINI_SYSTEM_PROMPT }] },
+          contents,
+        }),
+      }
+    );
+    const data  = await res.json();
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text
+      ?? 'Sorry, I couldn\'t get a response. Please try again.';
+    aiMessages.push({ role: 'model', text: reply });
+  } catch {
+    aiMessages.push({ role: 'model', text: 'Connection error. Please check your internet and try again.' });
+  }
+
+  sendBtn.disabled = false;
+  input.disabled   = false;
+  renderAiMessages();
+  input.focus();
+}
+
+
 // ─── Controls Initialisation ─────────────────────────────────────
 
 function initControls() {
   document.getElementById('settingsBtn').onclick = openSettings;
   document.getElementById('closeDrawer').onclick = closeSettings;
-  document.getElementById('drawerBackdrop').onclick = closeSettings;
+  document.getElementById('drawerBackdrop').onclick = () => {
+    if (document.getElementById('settingsDrawer').classList.contains('open')) closeSettings();
+    if (document.getElementById('aiPanel').classList.contains('open')) closeAiPanel();
+  };
+
+  // ── AI Tutor ──
+  document.getElementById('aiBtnTopbar').onclick = openAiPanel;
+  document.getElementById('closeAiPanel').onclick = closeAiPanel;
+  const aiInput   = document.getElementById('aiInput');
+  const aiSendBtn = document.getElementById('aiSendBtn');
+  aiSendBtn.onclick = () => {
+    const text = aiInput.value;
+    aiInput.value = '';
+    sendToGemini(text);
+  };
+  aiInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      aiSendBtn.click();
+    }
+  });
 
   // ── Instrument badge dropdown ──
   const instrBadge = document.getElementById('instrumentBadge');
