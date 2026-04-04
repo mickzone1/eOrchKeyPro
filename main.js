@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '202604042324';
+const APP_VERSION = '202604042328';
 
 // ─── Gemini AI Configuration ──────────────────────────────────────
 // Restrict this key to your domain (mickzone1.github.io) in Google Cloud Console.
@@ -842,7 +842,7 @@ async function sendToGemini(userText) {
       parts: [{ text: m.text }],
     }));
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -852,10 +852,16 @@ async function sendToGemini(userText) {
         }),
       }
     );
-    const data  = await res.json();
-    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text
-      ?? 'Sorry, I couldn\'t get a response. Please try again.';
-    aiMessages.push({ role: 'model', text: reply });
+    const data = await res.json();
+    if (!res.ok || data.error) {
+      const msg = data.error?.message ?? `HTTP ${res.status}`;
+      console.error('Gemini error:', data.error ?? res.status);
+      aiMessages.push({ role: 'model', text: `Error: ${msg}` });
+    } else {
+      const reply = data.candidates?.[0]?.content?.parts?.[0]?.text
+        ?? 'No response received. Please try again.';
+      aiMessages.push({ role: 'model', text: reply });
+    }
   } catch (err) {
     console.error('Gemini API error:', err);
     aiMessages.push({ role: 'model', text: 'Connection error. Please check your internet and try again.' });
