@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '202604032054';
+const APP_VERSION = '202604041150';
 
 // ─── Supabase Configuration ───────────────────────────────────────
 // Replace these placeholders after creating your Supabase project.
@@ -123,6 +123,12 @@ let remapTarget = -1;
 
 /** True when the app was loaded from a locked share URL — settings are inaccessible. */
 let settingsLocked = false;
+
+/** True after the app shell has been initialised (prevents double-wiring of controls). */
+let appStarted = false;
+
+/** True after Tone.start() has successfully resumed the AudioContext. */
+let audioReady = false;
 
 
 // ─── Application State ───────────────────────────────────────────
@@ -721,6 +727,7 @@ function initControls() {
   const instrBadge = document.getElementById('instrumentBadge');
   const instrDropdown = document.getElementById('instrumentDropdown');
   instrBadge.addEventListener('click', (e) => {
+    if (settingsLocked) return;
     e.stopPropagation();
     const open = !instrDropdown.classList.contains('hidden');
     instrDropdown.classList.toggle('hidden', open);
@@ -1417,9 +1424,13 @@ if (sb) {
 }
 
 
-document.getElementById('startBtn').addEventListener('click', async () => {
+async function startApp() {
+  if (appStarted) return;
+  appStarted = true;
+
   // Resume AudioContext (required by browser autoplay policy)
   await Tone.start();
+  audioReady = true;
   Tone.getDestination().volume.value = state.dynamics;
   // Override iOS silent-mode mute — treat app as a media playback app (iOS 16.4+)
   if (navigator.audioSession) navigator.audioSession.type = 'playback';
@@ -1450,13 +1461,17 @@ document.getElementById('startBtn').addEventListener('click', async () => {
   // Make topbar dynamics bars tappable — bar i sets volume to -24+(i*6) dB
   document.querySelectorAll('#dynamicsIndicator .dyn-bar').forEach((bar, i) => {
     bar.addEventListener('click', () => {
-      const v = -24 + i * 6;   // bar 0=−24, 1=−18, 2=−12, 3=−6, 4=0
+      const v = -24 + i * 6; // bar 0=−24, 1=−18, 2=−12, 3=−6, 4=0
       state.dynamics = v;
       Tone.getDestination().volume.rampTo(v, 0.1);
       updateDynamicsIndicator();
     });
   });
+
   if (settingsLocked) {
     document.getElementById('settingsBtn').style.display = 'none';
+    document.getElementById('instrumentBadge').classList.add('topbar-instrument--locked');
   }
-});
+}
+
+document.getElementById('startBtn').addEventListener('click', () => startApp());
