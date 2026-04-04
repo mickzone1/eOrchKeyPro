@@ -1,11 +1,10 @@
 'use strict';
 
-const APP_VERSION = '202604050008';
+const APP_VERSION = '202604050014';
 
-// ─── Gemini AI Configuration ──────────────────────────────────────
-// Restrict this key to your domain (mickzone1.github.io) in Google Cloud Console.
-const GEMINI_API_KEY = 'AIzaSyDNn7O7z_US65yrMcy6VisUGKZEroI18a4';
-const GEMINI_SYSTEM_PROMPT = `You are the built-in help assistant for e-Orch KeyPro, a mobile web app for playing digital musical instruments in music education. Help users learn how to use the app. Keep answers concise — 2–4 sentences unless more detail is needed.
+// ─── DeepSeek AI Configuration ────────────────────────────────────
+const DEEPSEEK_API_KEY = 'sk-6bf2f75ace96400e82c1f11b909d62bc';
+const AI_SYSTEM_PROMPT = `You are the built-in help assistant for e-Orch KeyPro, a mobile web app for playing digital musical instruments in music education. Help users learn how to use the app. Keep answers concise — 2–4 sentences unless more detail is needed.
 
 App features:
 - INSTRUMENTS: Piano, Flute, Vibraphone, FM Synth — tap the instrument badge in the top bar or change in Settings.
@@ -837,33 +836,33 @@ async function sendToGemini(userText) {
   input.disabled   = true;
 
   try {
-    const contents = aiMessages.filter(m => !m.uiOnly).map(m => ({
-      role: m.role === 'user' ? 'user' : 'model',
-      parts: [{ text: m.text }],
-    }));
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: GEMINI_SYSTEM_PROMPT }] },
-          contents,
-        }),
-      }
-    );
+    const messages = [
+      { role: 'system', content: AI_SYSTEM_PROMPT },
+      ...aiMessages.filter(m => !m.uiOnly).map(m => ({
+        role: m.role === 'user' ? 'user' : 'assistant',
+        content: m.text,
+      })),
+    ];
+    const res = await fetch('https://api.deepseek.com/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+      },
+      body: JSON.stringify({ model: 'deepseek-chat', messages }),
+    });
     const data = await res.json();
     if (!res.ok || data.error) {
       const msg = data.error?.message ?? `HTTP ${res.status}`;
-      console.error('Gemini error:', data.error ?? res.status);
+      console.error('DeepSeek error:', data.error ?? res.status);
       aiMessages.push({ role: 'model', text: `Error: ${msg}` });
     } else {
-      const reply = data.candidates?.[0]?.content?.parts?.[0]?.text
+      const reply = data.choices?.[0]?.message?.content
         ?? 'No response received. Please try again.';
       aiMessages.push({ role: 'model', text: reply });
     }
   } catch (err) {
-    console.error('Gemini API error:', err);
+    console.error('DeepSeek API error:', err);
     aiMessages.push({ role: 'model', text: 'Connection error. Please check your internet and try again.' });
   }
 
