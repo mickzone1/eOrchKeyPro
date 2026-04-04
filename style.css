@@ -123,11 +123,10 @@ html, body {
   overflow: hidden;
 }
 
-.topbar-title {
-  font-size: 0.95rem;
-  font-weight: 900;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
+.topbar-logo {
+  height: 26px;
+  width: auto;
+  display: block;
   flex-shrink: 0;
 }
 
@@ -140,6 +139,17 @@ html, body {
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
+}
+
+.dynamics-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dyn-speaker {
+  color: var(--c-border2);
+  flex-shrink: 0;
 }
 
 .dynamics-indicator {
