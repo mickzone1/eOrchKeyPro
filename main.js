@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '202604042156';
+const APP_VERSION = '202604042206';
 
 // ─── Supabase Configuration ───────────────────────────────────────
 // Replace these placeholders after creating your Supabase project.
@@ -363,6 +363,25 @@ function tapVelocity(e, btnEl) {
   return mapRange(zoneY, 0, 1, 1.0, 0.12);
 }
 
+/** Move the key-dot to the finger's position within a key button. */
+function moveDotTo(btnEl, e) {
+  const dot = btnEl?.querySelector('.key-dot');
+  if (!dot) return;
+  const rect = btnEl.getBoundingClientRect();
+  const x = Math.max(10, Math.min(90, ((e.clientX - rect.left) / rect.width)  * 100));
+  const y = Math.max(10, Math.min(90, ((e.clientY - rect.top)  / rect.height) * 100));
+  dot.style.left = x + '%';
+  dot.style.top  = y + '%';
+}
+
+/** Reset the key-dot back to the CSS-defined centre position. */
+function resetDot(btnEl) {
+  const dot = btnEl?.querySelector('.key-dot');
+  if (!dot) return;
+  dot.style.left = '';
+  dot.style.top  = '';
+}
+
 
 // ─── Key Grid Rendering ──────────────────────────────────────────
 
@@ -424,6 +443,7 @@ function renderKeyGrid() {
         originY: e.clientY,
       });
       btn.classList.add('active');
+      moveDotTo(btn, e);
     }, { passive: false });
 
     // ── Pointer Move (gesture expressions) ──
@@ -450,14 +470,19 @@ function renderKeyGrid() {
       const newIdx = newBtn ? Number(newBtn.dataset.index) : -1;
       if (newIdx !== -1 && newIdx !== ptr.keyIndex) {
         engine.triggerRelease(ptr.pitch);
+        resetDot(keyButtonEl(ptr.keyIndex));
         keyButtonEl(ptr.keyIndex)?.classList.remove('active');
         const newPitch = state.computedPitches[newIdx];
         engine.triggerAttack(newPitch, tapVelocity(e, newBtn));
         keyButtonEl(newIdx)?.classList.add('active');
+        moveDotTo(keyButtonEl(newIdx), e);
         ptr.keyIndex = newIdx;
         ptr.pitch = newPitch;
         ptr.originX = e.clientX;
         ptr.originY = e.clientY;
+      } else {
+        // Finger still on same key — track position
+        moveDotTo(keyButtonEl(ptr.keyIndex), e);
       }
     });
 
@@ -469,6 +494,7 @@ function renderKeyGrid() {
 
       engine.triggerRelease(ptr.pitch);
       activePointers.delete(e.pointerId);
+      resetDot(keyButtonEl(ptr.keyIndex));
       keyButtonEl(ptr.keyIndex)?.classList.remove('active');
 
       // Reset expression when dropping to 1 finger or fewer
