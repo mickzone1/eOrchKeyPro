@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '202604042305';
+const APP_VERSION = '202604042324';
 
 // ─── Gemini AI Configuration ──────────────────────────────────────
 // Restrict this key to your domain (mickzone1.github.io) in Google Cloud Console.
@@ -799,6 +799,8 @@ function openAiPanel() {
     aiMessages.push({ role: 'model', text: 'Hi! Ask me anything about how to use e-Orch KeyPro.', uiOnly: true });
     renderAiMessages();
   }
+  // Must focus synchronously inside the user-gesture handler for iOS keyboard to appear
+  document.getElementById('aiInput').focus();
 }
 
 function closeAiPanel() {
