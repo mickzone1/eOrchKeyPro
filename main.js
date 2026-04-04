@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '202604042259';
+const APP_VERSION = '202604042305';
 
 // ─── Gemini AI Configuration ──────────────────────────────────────
 // Restrict this key to your domain (mickzone1.github.io) in Google Cloud Console.
@@ -796,7 +796,7 @@ function openAiPanel() {
   document.getElementById('aiPanel').classList.add('open');
   document.getElementById('drawerBackdrop').classList.remove('hidden');
   if (aiMessages.length === 0) {
-    aiMessages.push({ role: 'model', text: 'Hi! Ask me anything about how to use e-Orch KeyPro.' });
+    aiMessages.push({ role: 'model', text: 'Hi! Ask me anything about how to use e-Orch KeyPro.', uiOnly: true });
     renderAiMessages();
   }
 }
@@ -835,7 +835,7 @@ async function sendToGemini(userText) {
   input.disabled   = true;
 
   try {
-    const contents = aiMessages.map(m => ({
+    const contents = aiMessages.filter(m => !m.uiOnly).map(m => ({
       role: m.role === 'user' ? 'user' : 'model',
       parts: [{ text: m.text }],
     }));
@@ -854,7 +854,8 @@ async function sendToGemini(userText) {
     const reply = data.candidates?.[0]?.content?.parts?.[0]?.text
       ?? 'Sorry, I couldn\'t get a response. Please try again.';
     aiMessages.push({ role: 'model', text: reply });
-  } catch {
+  } catch (err) {
+    console.error('Gemini API error:', err);
     aiMessages.push({ role: 'model', text: 'Connection error. Please check your internet and try again.' });
   }
 
