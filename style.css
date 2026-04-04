@@ -1003,14 +1003,7 @@ html, body {
   letter-spacing: 0.2em;
   color: var(--c-muted);
 }
-.gate-class-row { display: flex; align-items: center; gap: 8px; }
-.gate-code-label {
-  font-size: 0.65rem;
-  letter-spacing: 0.18em;
-  color: var(--c-muted);
-  text-transform: uppercase;
-  white-space: nowrap;
-}
+.gate-class-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
 .gate-class-input {
   background: none;
   border: 1px solid var(--c-muted);
@@ -1020,7 +1013,7 @@ html, body {
   letter-spacing: 0.3em;
   text-transform: uppercase;
   padding: 8px 12px;
-  width: 100px;
+  width: 110px;
   text-align: center;
 }
 .gate-class-input::placeholder { color: var(--c-muted); letter-spacing: 0.2em; }
