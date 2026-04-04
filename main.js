@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '202604041347';
+const APP_VERSION = '202604041533';
 
 // ─── Supabase Configuration ───────────────────────────────────────
 // Replace these placeholders after creating your Supabase project.
@@ -141,6 +141,7 @@ const state = {
   manualPitches: ['C3','D3','E3','F3','G3','A3','B3','C4','D4','E4','F4','G4','A4','B4','C5','D5'],
   microtonalIntervals: [0, 75, 150, 225, 300, 375, 450, 525, 600, 675, 750, 825, 900, 975, 1050, 1125],
   gestureSensitivity: { y: 1.0, x: 1.0, filterOn: false, pitchBendOn: false },
+  showFreq: true,
   fmParams: {
     attack: 0.01,
     decay: 0.3,
@@ -403,7 +404,7 @@ function renderKeyGrid() {
       ${kbdLabel ? `<div class="key-kbd">${kbdLabel}</div>` : ''}
       ${state.noteDisplay !== 'solfege' ? `<div class="key-note">${pitch.label}</div>` : ''}
       ${state.noteDisplay !== 'note'    ? `<div class="key-solfege">${getSolfege(pitch.note)}</div>` : ''}
-      <div class="key-freq">${Math.round(pitch.freq)} Hz</div>
+      ${state.showFreq ? `<div class="key-freq">${Math.round(pitch.freq)} Hz</div>` : ''}
     `;
 
     // ── Pointer Down ──
@@ -435,12 +436,12 @@ function renderKeyGrid() {
       // Expression only when 2+ fingers are on screen
       if (activePointers.size >= 2) {
         if (state.gestureSensitivity.filterOn) {
-          const dy = (ptr.originY - e.clientY) * state.gestureSensitivity.y;
-          engine.setFilterCutoff(mapRange(dy, -220, 220, 180, 14000));
+          const dx = (e.clientX - ptr.originX) * state.gestureSensitivity.x;
+          engine.setFilterCutoff(mapRange(dx, -220, 220, 180, 14000));
         }
         if (state.gestureSensitivity.pitchBendOn) {
-          const dx = (e.clientX - ptr.originX) * state.gestureSensitivity.x;
-          engine.setPitchBend(mapRange(dx, -220, 220, -3, 3));
+          const dy = (ptr.originY - e.clientY) * state.gestureSensitivity.y;
+          engine.setPitchBend(mapRange(dy, -220, 220, -3, 3));
         }
       }
 
@@ -679,6 +680,7 @@ function syncSettingsUI() {
   activateSeg('solfegePicker', state.noteDisplay);
   activateSeg('filterToggle', state.gestureSensitivity.filterOn ? 'on' : 'off');
   activateSeg('pitchBendToggle', state.gestureSensitivity.pitchBendOn ? 'on' : 'off');
+  activateSeg('freqToggle', state.showFreq ? 'on' : 'off');
 
   // Show/hide conditional panels
   document.getElementById('fmPanel').classList.toggle('hidden', state.instrument !== 'fmSynth');
@@ -841,6 +843,11 @@ function initControls() {
     state.gestureSensitivity.pitchBendOn = (v === 'on');
     if (!state.gestureSensitivity.pitchBendOn) engine.resetPitchBend();
   });
+  bindSegmented('freqToggle', (v) => {
+    state.showFreq = (v === 'on');
+    recomputePitches();
+    renderKeyGrid();
+  });
 
   // ── FM synth params ──
   bindRange('modIndex',   'modIndexVal',   (v) => { state.fmParams.modulationIndex = v; engine.updateFMParams(); }, 1);
@@ -996,7 +1003,7 @@ function initNotePickerControls() {
 const PRESET_KEYS = [
   'instrument', 'buttonCount', 'pitchMode', 'scale',
   'manualPitches', 'microtonalIntervals', 'gestureSensitivity',
-  'fmParams', 'keyMap', 'dynamics', 'noteDisplay', 'accentColour',
+  'fmParams', 'keyMap', 'dynamics', 'noteDisplay', 'accentColour', 'showFreq',
 ];
 
 function encodeState(locked = false) {
@@ -1025,6 +1032,7 @@ function mergeStateSnapshot(p) {
   if (p.noteDisplay)                  state.noteDisplay         = p.noteDisplay;
   else if (p.showSolfege === true)    state.noteDisplay         = 'both'; // back-compat
   if (p.accentColour)                 applyAccentColour(p.accentColour);
+  if (p.showFreq !== undefined)       state.showFreq            = p.showFreq;
 }
 
 /**

@@ -70,7 +70,7 @@ html, body {
 
 .gate-start {
   margin-top: 14px;
-  padding: 18px 52px;
+  padding: 14px 52px;
   background: transparent;
   color: var(--c-muted);
   font-family: inherit;
@@ -1009,7 +1009,7 @@ html, body {
   border: 1px solid var(--c-muted);
   color: var(--c-text);
   font-family: inherit;
-  font-size: 1rem;
+  font-size: 0.7rem;
   letter-spacing: 0.3em;
   text-transform: uppercase;
   padding: 8px 12px;
