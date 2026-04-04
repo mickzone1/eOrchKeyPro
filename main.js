@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '202604041538';
+const APP_VERSION = '202604041543';
 
 // ─── Supabase Configuration ───────────────────────────────────────
 // Replace these placeholders after creating your Supabase project.
@@ -141,7 +141,6 @@ const state = {
   manualPitches: ['C3','D3','E3','F3','G3','A3','B3','C4','D4','E4','F4','G4','A4','B4','C5','D5'],
   microtonalIntervals: [0, 75, 150, 225, 300, 375, 450, 525, 600, 675, 750, 825, 900, 975, 1050, 1125],
   gestureSensitivity: { y: 1.0, x: 1.0, filterOn: false, pitchBendOn: false },
-  showFreq: true,
   fmParams: {
     attack: 0.01,
     decay: 0.3,
@@ -151,7 +150,7 @@ const state = {
     harmonicity: 1.5,
   },
   dynamics: 0,                   // master volume offset in dB (−30 to 0)
-  noteDisplay: 'both',           // 'note' | 'both' | 'solfege'
+  keyLabels: { note: true, solfege: true, freq: true }, // independent toggles
   accentColour: localStorage.getItem('eOrchKey_accent') ?? '#d4ff00',
   keyMap: [...DEFAULT_KEY_MAP],  // mutable copy, saved with presets
   computedPitches: [],           // [{ note, freq, label, detuneOffset }]
@@ -402,9 +401,9 @@ function renderKeyGrid() {
     btn.innerHTML = `
       <div class="key-dot"></div>
       ${kbdLabel ? `<div class="key-kbd">${kbdLabel}</div>` : ''}
-      ${state.noteDisplay !== 'solfege' ? `<div class="key-note">${pitch.label}</div>` : ''}
-      ${state.noteDisplay !== 'note'    ? `<div class="key-solfege">${getSolfege(pitch.note)}</div>` : ''}
-      ${state.showFreq ? `<div class="key-freq">${Math.round(pitch.freq)} Hz</div>` : ''}
+      ${state.keyLabels.note    ? `<div class="key-note">${pitch.label}</div>` : ''}
+      ${state.keyLabels.solfege ? `<div class="key-solfege">${getSolfege(pitch.note)}</div>` : ''}
+      ${state.keyLabels.freq    ? `<div class="key-freq">${Math.round(pitch.freq)} Hz</div>` : ''}
     `;
 
     // ── Pointer Down ──
@@ -677,10 +676,11 @@ function syncSettingsUI() {
   activateSeg('instrumentPicker', state.instrument);
   activateSeg('pitchModePicker', state.pitchMode);
   activateSeg('scalePicker', state.scale.type);
-  activateSeg('solfegePicker', state.noteDisplay);
   activateSeg('filterToggle', state.gestureSensitivity.filterOn ? 'on' : 'off');
   activateSeg('pitchBendToggle', state.gestureSensitivity.pitchBendOn ? 'on' : 'off');
-  activateSeg('freqToggle', state.showFreq ? 'on' : 'off');
+  document.querySelectorAll('#keyLabelsPicker .seg-btn').forEach((btn) => {
+    btn.classList.toggle('active', state.keyLabels[btn.dataset.key] ?? false);
+  });
 
   // Show/hide conditional panels
   document.getElementById('fmPanel').classList.toggle('hidden', state.instrument !== 'fmSynth');
@@ -787,10 +787,15 @@ function initControls() {
     renderKeyMapRows();
   });
 
-  // ── Solfège / note display mode ──
-  bindSegmented('solfegePicker', (value) => {
-    state.noteDisplay = value;
-    renderKeyGrid();
+  // ── Key labels (multi-select: Note / Solfège / Freq) ──
+  document.querySelectorAll('#keyLabelsPicker .seg-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.key;
+      state.keyLabels[key] = !state.keyLabels[key];
+      btn.classList.toggle('active', state.keyLabels[key]);
+      recomputePitches();
+      renderKeyGrid();
+    });
   });
 
   // ── Pitch mode ──
@@ -843,12 +848,6 @@ function initControls() {
     state.gestureSensitivity.pitchBendOn = (v === 'on');
     if (!state.gestureSensitivity.pitchBendOn) engine.resetPitchBend();
   });
-  bindSegmented('freqToggle', (v) => {
-    state.showFreq = (v === 'on');
-    recomputePitches();
-    renderKeyGrid();
-  });
-
   // ── FM synth params ──
   bindRange('modIndex',   'modIndexVal',   (v) => { state.fmParams.modulationIndex = v; engine.updateFMParams(); }, 1);
   bindRange('harmonicity','harmonicityVal',(v) => { state.fmParams.harmonicity = v;     engine.updateFMParams(); }, 1);
@@ -1003,7 +1002,7 @@ function initNotePickerControls() {
 const PRESET_KEYS = [
   'instrument', 'buttonCount', 'pitchMode', 'scale',
   'manualPitches', 'microtonalIntervals', 'gestureSensitivity',
-  'fmParams', 'keyMap', 'dynamics', 'noteDisplay', 'accentColour', 'showFreq',
+  'fmParams', 'keyMap', 'dynamics', 'keyLabels', 'accentColour',
 ];
 
 function encodeState(locked = false) {
@@ -1028,11 +1027,17 @@ function mergeStateSnapshot(p) {
   if (p.gestureSensitivity)           Object.assign(state.gestureSensitivity, p.gestureSensitivity);
   if (p.fmParams)                     Object.assign(state.fmParams, p.fmParams);
   if (p.keyMap)                       state.keyMap              = p.keyMap;
-  if (typeof p.dynamics === 'number') state.dynamics            = p.dynamics;
-  if (p.noteDisplay)                  state.noteDisplay         = p.noteDisplay;
-  else if (p.showSolfege === true)    state.noteDisplay         = 'both'; // back-compat
-  if (p.accentColour)                 applyAccentColour(p.accentColour);
-  if (p.showFreq !== undefined)       state.showFreq            = p.showFreq;
+  if (typeof p.dynamics === 'number') state.dynamics = p.dynamics;
+  if (p.keyLabels)                    Object.assign(state.keyLabels, p.keyLabels);
+  // back-compat: convert old noteDisplay / showFreq / showSolfege to keyLabels
+  else if (p.noteDisplay) {
+    state.keyLabels.note    = p.noteDisplay !== 'solfege';
+    state.keyLabels.solfege = p.noteDisplay !== 'note';
+    if (p.showFreq !== undefined) state.keyLabels.freq = p.showFreq;
+  } else if (p.showSolfege === true) {
+    state.keyLabels.note = true; state.keyLabels.solfege = true;
+  }
+  if (p.accentColour) applyAccentColour(p.accentColour);
 }
 
 /**

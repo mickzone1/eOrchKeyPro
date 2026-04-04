@@ -101,18 +101,13 @@
           <input type="range" id="keyCount" min="1" max="16" value="6" class="range-input" />
         </div>
 
-        <!-- Solfège -->
+        <!-- Key Labels (multi-select) -->
         <div class="setting-group">
           <div class="setting-label">KEY LABELS</div>
-          <div class="segmented" id="solfegePicker">
-            <button class="seg-btn" data-value="note">Note</button>
-            <button class="seg-btn active" data-value="both">Both</button>
-            <button class="seg-btn" data-value="solfege">Solfège</button>
-          </div>
-          <div class="setting-label mt8">FREQUENCY HZ</div>
-          <div class="segmented" id="freqToggle">
-            <button class="seg-btn active" data-value="on">SHOW</button>
-            <button class="seg-btn" data-value="off">HIDE</button>
+          <div class="segmented" id="keyLabelsPicker">
+            <button class="seg-btn active" data-key="note">Note</button>
+            <button class="seg-btn active" data-key="solfege">Solfège</button>
+            <button class="seg-btn active" data-key="freq">Freq</button>
           </div>
         </div>
 
